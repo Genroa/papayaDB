@@ -25,24 +25,26 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 	private final HttpServer listeningServer;
 	private final NetClient tcpClient;
 	private final String host;
-	private final int port;
+	private final int connectionPort;
+	private final int listeningPort;
 	private final Router router;
 
 
-	public RESTQueryInterface(String host, int port) {
+	public RESTQueryInterface(String host, int connectionPort, int listeningPort) {
 		NetClientOptions options = new NetClientOptions();
 		tcpClient = getVertx().createNetClient(options);
 		this.host = host;
-		this.port = port;
+		this.connectionPort = connectionPort;
+		this.listeningPort = listeningPort;
 
 		router = Router.router(getVertx());
-		router.get("/*").handler(this::onRESTQuery);
+		router.get("/request/*").handler(this::onRESTQuery);
 		
 		listeningServer = getVertx().createHttpServer();
 	}
 	
 	public void listen() {
-		listeningServer.requestHandler(router::accept).listen(8080);
+		listeningServer.requestHandler(router::accept).listen(listeningPort);
 		System.out.println("Now listening for HTTP REST queries...");
 	}
 	
@@ -56,7 +58,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 	@Override
 	public void processQuery(String query, Consumer<QueryAnswer> callback) {
 		JsonObject answer = new JsonObject();
-		answer.put("test", "test");
+		answer.put("query", query);
 		callback.accept(new QueryAnswer(answer));
 		/*
 		// VRAI CODE EN SUPPOSANT QU'UNE DB EXISTE DE L'AUTRE COTE DE LA CONNEXION
@@ -96,7 +98,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 
 	
 	public static void main(String[] args) {
-		RESTQueryInterface RESTInterface = new RESTQueryInterface("localhost", 200);
+		RESTQueryInterface RESTInterface = new RESTQueryInterface("localhost", 200, 8080);
 		RESTInterface.listen();
 	}
 }
