@@ -54,8 +54,7 @@ public class Connection extends AbstractChainableQueryInterface {
 	public void processQuery(String query, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
 		client.getNow(port, host, "/"+query, response -> {
-			System.out.println("Received response with status code " + response.statusCode());
-			
+			//TODO check response.statusCode() before calling bodyHandler
 			response.bodyHandler(bodyBuffer -> { callback.accept(new QueryAnswer(bodyBuffer.toJsonObject())); });
 		});
 	}

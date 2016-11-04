@@ -10,7 +10,7 @@ public class QueryAnswer {
 	/**
 	 * Objet JSON renvoyé.
 	 */
-	private JsonObject answer;
+	private JsonObject data;
 	/**
 	 * Status de la réponse.
 	 */
@@ -21,13 +21,17 @@ public class QueryAnswer {
 	 * @param answer La réponse qui sera contenue dans l'objet.
 	 */
 	public QueryAnswer(JsonObject answer) {
-		this.answer = answer;
+		this.data = answer;
 		this.status = QueryAnswerStatus.OK;
-		//TODO
+		//TODO définir le vrai status en le lisant dans answer
 	}
 	
 	@Override
 	public String toString() {
-		return status.name()+": "+answer.encodePrettily();
+		return status.name()+": "+data.encodePrettily();
+	}
+	
+	public JsonObject getData() {
+		return this.data;
 	}
 }
