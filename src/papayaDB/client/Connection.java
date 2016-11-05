@@ -62,7 +62,7 @@ public class Connection extends AbstractChainableQueryInterface {
 	
 	public static void main(String[] args) {
 		Connection client = new Connection("localhost", 8080);
-		client.processQuery("/get/lapins/36", answer -> {
+		client.processQuery("request/lapins/36", answer -> {
 			System.out.println(answer);
 			client.close();
 		});

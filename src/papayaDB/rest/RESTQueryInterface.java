@@ -6,6 +6,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetClientOptions;
@@ -13,6 +14,7 @@ import io.vertx.core.net.NetSocket;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import papayaDB.api.QueryAnswer;
+import papayaDB.api.QueryAnswerStatus;
 import papayaDB.api.chainable.AbstractChainableQueryInterface;
 import papayaDB.client.Connection;
 
@@ -57,12 +59,14 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 
 	@Override
 	public void processQuery(String query, Consumer<QueryAnswer> callback) {
-		JsonObject answer = new JsonObject();
-		answer.put("query", query);
-		callback.accept(new QueryAnswer(answer));
 		/*
+		JsonObject answer = new JsonObject();
+		answer.put("status", QueryAnswerStatus.OK.name());
+		answer.put("data", new JsonArray().add(query));
+		callback.accept(new QueryAnswer(answer));
+		*/
 		// VRAI CODE EN SUPPOSANT QU'UNE DB EXISTE DE L'AUTRE COTE DE LA CONNEXION
-		tcpClient.connect(port, host, connectHandler -> {
+		tcpClient.connect(connectionPort, host, connectHandler -> {
 			if (connectHandler.succeeded()) {
 				System.out.println("Connection established for query");
 				NetSocket socket = connectHandler.result();
@@ -70,6 +74,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 				// Définir quoi faire avec la réponse
 				socket.handler(buffer -> {
 					JsonObject answer = buffer.toJsonObject();
+					System.out.println("Received query answer: "+answer);
 					callback.accept(new QueryAnswer(answer));
 				});
 				
@@ -80,7 +85,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 				System.out.println("Failed to connect: " + connectHandler.cause().getMessage());
 			}
 		});
-		*/
+		
 	}
 
 	public void onRESTQuery(RoutingContext routingContext) {
@@ -98,7 +103,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 
 	
 	public static void main(String[] args) {
-		RESTQueryInterface RESTInterface = new RESTQueryInterface("localhost", 200, 8080);
+		RESTQueryInterface RESTInterface = new RESTQueryInterface("localhost", 6666, 8080);
 		RESTInterface.listen();
 	}
 }
