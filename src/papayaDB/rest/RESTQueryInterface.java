@@ -6,7 +6,6 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetClientOptions;
@@ -14,9 +13,7 @@ import io.vertx.core.net.NetSocket;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import papayaDB.api.QueryAnswer;
-import papayaDB.api.QueryAnswerStatus;
 import papayaDB.api.chainable.AbstractChainableQueryInterface;
-import papayaDB.client.Connection;
 
 /**
  * Représente une interface web d'accès à une base de données, par l'intermédiaire de routes

@@ -2,8 +2,6 @@ package papayaDB.db;
 
 import java.util.function.Consumer;
 
-import io.vertx.core.Handler;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
