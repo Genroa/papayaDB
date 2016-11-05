@@ -1,0 +1,25 @@
+Création de la DB
+	/createdb/:name
+
+Suppression de la DB :
+	/deletedb/:name
+	
+Requetes :
+	Insertion d'un document :
+		/insert/:dbname/:documentname
+		
+	Exporter tous les documents :
+		/exportall/:dbname
+		
+	Select par champ :
+		/request/field/:name
+	
+	Select par chemin :
+		/request/path/:path/:separated/:by/:slash
+		
+	Options :
+		Limitation min max:
+			/request/field/:name/min/:minvalue/max/:maxvalue
+			
+	Suppression d'un document :
+		/deletedocument/:documentname
