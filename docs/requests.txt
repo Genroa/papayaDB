@@ -12,14 +12,18 @@ Requetes :
 		/exportall/:dbname
 		
 	Select par champ :
-		/request/:dbname/field/:name
+		/request/:dbname/field/[:f1;f2...]
 	
 	Select par chemin :
 		/request/:dbname/path/:path/:separated/:by/:slash
 		
 	Options :
 		Limitation min max:
-			/request/:dbname/field/:name/min/:minvalue/max/:maxvalue
+			/request/:dbname/field/[:f1;f2...]/[:minValue;maxValue]
+			borne inferieure uniquement :
+				/request/:dbname/field/[:f1;f2...]/min/:minValue
+			borne superieure uniquement :
+				/request/:dbname/field/[:f1;f2...]/max/:maxValue
 			
 	Suppression d'un document :
-		/deletedocument/:dbname/:documentname
+		/deletedocument/:dbname/[:doc1;doc2...]
