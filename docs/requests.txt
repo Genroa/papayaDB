@@ -3,27 +3,138 @@ Création de la DB
 
 Suppression de la DB :
 	/deletedb/:name
-	
+
 Requetes :
 	Insertion d'un document :
 		/insert/:dbname/:documentname
-		
+
 	Exporter tous les documents :
 		/exportall/:dbname
-		
+
+	Select par chemin : //TODO: DEMANDER AU PROF CE QU'IL VOIT LA DEDANS
+		/get/:dbname/path/:path/:separated/:by/:slash
+
 	Select par champ :
-		/request/:dbname/field/[:f1;f2...]
-	
-	Select par chemin :
-		/request/:dbname/path/:path/:separated/:by/:slash
-		
+		/get/:dbname/:[option/value]/...
+
 	Options :
-		Limitation min max:
-			/request/:dbname/field/[:f1;f2...]/[:minValue;maxValue]
-			borne inferieure uniquement :
-				/request/:dbname/field/[:f1;f2...]/min/:minValue
-			borne superieure uniquement :
-				/request/:dbname/field/[:f1;f2...]/max/:maxValue
-			
+		Limitation min max (min et max dépendent du type en entrée) :
+			bounds/[:champ;:min;:max]
+		Filtre sur les champs :
+			fields/:champ/
+			fields/:[c1;c2]/
+
+		Nombre d'éléments :
+			limit/:nombreDeValeurs/
+
+		Ordre des éléments de retour:
+			order/[:champ;:ordre]
+			avec ordre vallant asc ou desc
+
+		Egalité de champ :
+			equals/:champ=":valeur"/
+			equals/[:champ1=":valeur1";:champ2=":valeur2"]
+
+		Egalité partielle de champ:
+			like/[:champ; "...%"] chaines commençant par "..."
+
+		Inégalité de champ :
+			notequals/:champ=":valeur"/
+			notequals/[:champ1=":valeur1";:champ2=":valeur2"]
+
+	Exemple de requete :
+		/get/:dbname/fields/[name,age]/bounds/[age;0;18]/limit/6/equals/[name="Pierre"]/order/[age;ASC]
+
 	Suppression d'un document :
 		/deletedocument/:dbname/[:doc1;doc2...]
+		
+		
+JEAN-MICHEL LA REGEX DE SEPARATION PAR / HORS DES "" :
+\/(?=(?:[^"]*"[^"]*")*[^"]*$)
+
+Pour les paramètres prenant des strings, la chaine doit etre encodée!!!!!
+
+Split code :
+import java.util.*;
+import java.lang.*;
+import java.io.*;
+		import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/* Name of the class has to be "Main" only if the class is public. */
+class Ideone
+{
+	public static void main (String[] args) throws java.lang.Exception
+	{
+		final String regex = "\\/(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+		final String string = "get/:dbname/fields/[name,age]/bounds/[age;0;18]/limit/6/equals/[name=\"Pierre\"]/order/[age;ASC]/";
+
+		final Pattern pattern = Pattern.compile(regex);
+		final Matcher matcher = pattern.matcher(string);
+
+		/*while (matcher.find()) {
+    		System.out.println("Full match: " + matcher.group(0));
+    		for (int i = 1; i <= matcher.groupCount(); i++) {
+        		System.out.println("Group " + i + ": " + matcher.group(i));
+    		}
+		}*/
+		
+		String[] spl = string.split(regex);
+		System.out.println(Arrays.toString(spl));
+	}
+}
+
+
+
+
+{
+	"type": get,
+	"db": 'dbname',
+	"parameters":
+	{
+		"fields": 
+		{
+			"value": [list, of, fields]
+		},
+		"bounds": 
+		{
+			"value":
+			[
+				{
+					"field": fieldName,
+					"min": 0,
+					"max": 12
+				},
+				{
+					"field": fieldName,
+					"min": 0,
+					"max": 12
+				}
+			]
+		},
+		"limit": 
+		{
+			"value": 6
+		},
+		"equals": 
+		{
+			"value":
+			[
+				{
+					"field": fieldName,
+					"value": "la value"
+				},
+				{
+					"field": fieldName,
+					"value": "la value"
+				}
+			]
+		},
+		"order":
+		{
+			"field": fieldName,
+			"way": ASC ou DESC
+		}
+	}
+}
+
