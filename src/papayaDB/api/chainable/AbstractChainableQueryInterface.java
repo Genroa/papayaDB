@@ -2,6 +2,7 @@ package papayaDB.api.chainable;
 
 import java.util.function.Consumer;
 
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import papayaDB.api.QueryAnswer;
 import papayaDB.api.QueryInterface;
@@ -11,7 +12,7 @@ import papayaDB.api.QueryInterface;
  * On peut considérer cette classe comme la classe la plus adaptée à étendre pour créer ses propres QueryInterface.
  * Cette implémentation définit le fonctionnement d'une AbstractChainableQueryInterface.
  */
-public abstract class AbstractChainableQueryInterface implements QueryInterface {
+public abstract class AbstractChainableQueryInterface extends AbstractVerticle implements QueryInterface {
 	/**
 	 * Objet {@link Vertx}
 	 */

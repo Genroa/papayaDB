@@ -42,6 +42,12 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		listeningServer = getVertx().createHttpServer();
 	}
 	
+	@Override
+	public void start() throws Exception {
+		listen();
+		super.start();
+	}
+	
 	public void listen() {
 		listeningServer.requestHandler(router::accept).listen(listeningPort);
 		System.out.println("Now listening for HTTP REST queries...");

@@ -19,6 +19,12 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 		tcpServer = getVertx().createNetServer(options);
 		tcpServer.connectHandler(this::onTcpQuery);
 	}
+	
+	@Override
+	public void start() throws Exception {
+		listen();
+		super.start();
+	}
 
 	public void listen() {
 		tcpServer.listen();
