@@ -22,7 +22,7 @@ public class DatabaseCollection {
 	/**
 	 * La Map contenant les éléments de la DatabaseCollection
 	 */
-	private final Map<UUID, FileRecord> elements = new HashMap<>();
+	private final Map<UUID, Record> elements = new HashMap<>();
 	
 	/**
 	 * La Map contenant les TreeMap représentant les index d'optimisation sur la Map des éléments
