@@ -20,6 +20,7 @@ Requetes :
 	Options :
 		Limitation min max (min et max dépendent du type en entrée) :
 			bounds/[:champ;:min;:max]
+			
 		Filtre sur les champs :
 			fields/:champ/
 			fields/:[c1;c2]/

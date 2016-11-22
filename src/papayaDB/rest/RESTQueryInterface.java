@@ -1,5 +1,9 @@
 package papayaDB.rest;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import io.vertx.core.http.HttpServer;
@@ -28,7 +32,6 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 	private final int listeningPort;
 	private final Router router;
 
-
 	public RESTQueryInterface(String host, int connectionPort, int listeningPort) {
 		NetClientOptions options = new NetClientOptions();
 		tcpClient = getVertx().createNetClient(options);
@@ -37,7 +40,13 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		this.listeningPort = listeningPort;
 
 		router = Router.router(getVertx());
-		router.get("/request/*").handler(this::onRESTQuery);
+		router.get("/request/*").handler(this::onRESTQuery);		
+		router.get("/createdb/:name").handler(this::createDBRequest);
+		router.get("/insert/:dbname/:documentname").handler(this::insertRequest);
+		router.get("/deletedb/:name").handler(this::deleteDBRequest);
+		router.get("/exportall/:dbname").handler(this::exportAllRequest);
+		router.get("/get/*").handler(this::getRequest);
+		router.get("/deletedocument/:dbname/:params").handler(this::deleteDocumentRequest);
 		
 		listeningServer = getVertx().createHttpServer();
 	}
@@ -96,12 +105,52 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		HttpServerRequest request = routingContext.request();
 		String path = request.path();
 
-		System.out.println("Received query "+path);
+		System.out.println("Received query " + path);
 		
 		processQuery(path, answer -> {
 			response.putHeader("content-type", "application/json")
 			.end(Json.encodePrettily(answer.getData()));
 		});
+	}
+	
+	public void createDBRequest(RoutingContext routingContext) {
+		//TODO : create method
+	}
+	
+	public void deleteDBRequest(RoutingContext routingContext) {
+		System.out.println("Delete DB request");
+		//TODO : create method
+	}
+	
+	public void exportAllRequest(RoutingContext routingContext) {
+		System.out.println("Export All request");
+		//TODO : create method
+	}
+	
+	public void insertRequest(RoutingContext routingContext) {
+		System.out.println("Insert request");
+		//TODO : create method
+	}
+	
+	public void getRequest(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		HttpServerRequest request = routingContext.request();
+		String path = request.path();
+		System.out.println("Received query " + path);
+		
+		System.out.println("Get request");
+		Optional<JsonObject> json = UrlToQuery.convertToJson(routingContext.request().path());
+		System.out.println("request " + json.get().toString());
+		
+		processQuery(json.get().encode(), answer -> {
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(answer.getData()));
+		});
+	}
+	
+	public void deleteDocumentRequest(RoutingContext routingContext) {
+		System.out.println("Delete Document request");
+		//TODO : create method
 	}
 
 	
