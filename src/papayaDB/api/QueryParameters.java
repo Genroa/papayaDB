@@ -1,10 +1,10 @@
 package papayaDB.api;
 
-import java.net.MalformedURLException;
-import java.util.Objects;
+import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import papayaDB.db.Record;
 
 public enum QueryParameters {
 	
@@ -72,6 +72,12 @@ public enum QueryParameters {
 			json.put("parameters", params.put("limit", new JsonObject().put("value", Integer.parseInt(value))));
 			return json;
 		}
+
+		@Override
+		public Stream<Record> processQueryParameters(JsonObject parameters, Stream<Record> elements) {
+			long maxSize = parameters.getLong("value");
+			return elements.limit(maxSize);
+		}
 	},
 	
 	EQUALS {
@@ -109,6 +115,10 @@ public enum QueryParameters {
 	
 	
 	public abstract JsonObject valueToJson(JsonObject json, String value);
+	
+	public Stream<Record> processQueryParameters(JsonObject parameters, Stream<Record> elements) {
+		return elements;
+	};
 	
 	private static JsonObject getParams(JsonObject json) {
 		if(json.containsKey("parameters")) {

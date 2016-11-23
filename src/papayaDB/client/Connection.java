@@ -62,7 +62,7 @@ public class Connection extends AbstractChainableQueryInterface {
 	
 	public static void main(String[] args) {
 		Connection client = new Connection("localhost", 8080);
-		client.processQuery("/get/dbname/fields/[name,age]/bounds/[age;0;18]/limit/6/equals/[name=%22/Pierre%22]/order/[age;ASC]", answer -> {
+		client.processQuery("get/testDb/fields/[name,age]/bounds/[age;0;18]/limit/1/equals/[name=%22/Pierre%22]/order/[age;ASC]", answer -> {
 			System.out.println(answer);
 			client.close();
 		});

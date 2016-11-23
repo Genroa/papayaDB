@@ -1,5 +1,6 @@
 package papayaDB.db;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 import io.vertx.core.json.JsonArray;
@@ -13,11 +14,13 @@ import papayaDB.api.chainable.AbstractChainableQueryInterface;
 
 public class LocalDataInterface extends AbstractChainableQueryInterface {
 	private final NetServer tcpServer;
-
-	public LocalDataInterface(int listeningPort) {
+	private final Map<String, DatabaseCollection> collections;
+	
+	public LocalDataInterface(int listeningPort, Map<String, DatabaseCollection> collections) {
 		NetServerOptions options = new NetServerOptions().setPort(listeningPort);
 		tcpServer = getVertx().createNetServer(options);
 		tcpServer.connectHandler(this::onTcpQuery);
+		this.collections = collections;
 	}
 	
 	@Override
@@ -40,8 +43,22 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	@Override
 	public void processQuery(String query, Consumer<QueryAnswer> callback) {
 		JsonObject answer = new JsonObject();
+		System.out.println(query);
+		JsonObject jsonQuery = new JsonObject(query);
+		// TODO vérification à faire sur la clef
+		String dbName = jsonQuery.getString("db");
+		DatabaseCollection collection = collections.get(dbName);
+		
+		// Erreur, db innexistante
+		if(collection == null) {
+			answer.put("status", QueryAnswerStatus.SYNTAX_ERROR.name());
+			answer.put("message", "db "+dbName+" doesn't exist");
+			callback.accept(new QueryAnswer(answer));
+			return;
+		}
+		
 		answer.put("status", QueryAnswerStatus.OK.name());
-		answer.put("data", new JsonArray().add(query));
+		answer.put("data", new JsonArray(collection.searchRecords(jsonQuery)));
 
 		callback.accept(new QueryAnswer(answer));
 	}
@@ -58,11 +75,5 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			});
 
 		});
-	}
-
-
-	public static void main(String[] args) {
-		LocalDataInterface db = new LocalDataInterface(6666);
-		db.listen();
 	}
 }

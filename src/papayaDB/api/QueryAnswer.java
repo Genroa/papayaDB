@@ -21,8 +21,8 @@ public class QueryAnswer {
 	 * @param answer La réponse qui sera contenue dans l'objet.
 	 */
 	public QueryAnswer(JsonObject answer) {
-		if(!answer.containsKey("status") || !answer.containsKey("data")) {
-			throw new IllegalArgumentException("JSON Object provided to build Query answer is malformed");
+		if(!answer.containsKey("status") || (answer.getString("status") == QueryAnswerStatus.OK.name() && !answer.containsKey("data"))) {
+			throw new IllegalArgumentException("JSON Object provided to build Query answer is malformed :"+answer.toString());
 		}
 		this.status = QueryAnswerStatus.valueOf(answer.getString("status"));
 		this.data = answer;
