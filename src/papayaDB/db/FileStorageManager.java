@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
-import papayaDB.api.QueryAnswerStatus;
 
 /**
  * Implémentation d'un StorageManager mappant le contenu de la base de données qu'il représente dans un fichier
@@ -194,8 +193,9 @@ public class FileStorageManager implements StorageManager {
 		
 		List<Entry<Integer, ArrayList<Integer>>> entries = holesMap.entrySet().stream()
 																			.filter(entry -> entry.getKey() >= chunkNumber)
-																			.sorted((entry1, entry2) -> {
-																				return 0;
+																			.map(entry -> {
+																				entry.getValue().sort((val1, val2) -> {return val1-val2;});
+																				return entry;
 																			})
 																			.collect(Collectors.toList());
 		
