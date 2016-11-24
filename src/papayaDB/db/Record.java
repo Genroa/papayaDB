@@ -12,7 +12,6 @@ public interface Record {
 	public JsonObject getRecord();
 	public void deleteRecord();
 	public void updateRecord(JsonObject newObject);
-	public boolean considerDeleted();
 	public StorageManager getStorageManager();
 	public UUID getUUID();
 }
