@@ -1,8 +1,5 @@
 package papayaDB.rest;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -17,6 +14,7 @@ import io.vertx.core.net.NetSocket;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import papayaDB.api.QueryAnswer;
+import papayaDB.api.QueryType;
 import papayaDB.api.chainable.AbstractChainableQueryInterface;
 
 /**
@@ -40,13 +38,13 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		this.listeningPort = listeningPort;
 
 		router = Router.router(getVertx());
-		router.get("/request/*").handler(this::onRESTQuery);		
-		router.get("/createdb/:name").handler(this::createDBRequest);
-		router.get("/insert/:dbname/:documentname").handler(this::insertRequest);
-		router.get("/deletedb/:name").handler(this::deleteDBRequest);
+		//router.get("/request/*").handler(this::onRESTQuery);		
+		router.post("/createdb/:name").handler(this::createDBRequest);
+		router.post("/insert/:dbname/:documentname").handler(this::insertRequest);
+		router.delete("/deletedb/:name").handler(this::deleteDBRequest);
 		router.get("/exportall/:dbname").handler(this::exportAllRequest);
-		router.get("/get/*").handler(this::getRequest);
-		router.get("/deletedocument/:dbname/:params").handler(this::deleteDocumentRequest);
+		router.get("/get/*").handler(x -> this.getRequest(x, QueryType.GET));
+		router.delete("/deletedocument/:dbname/:params").handler(this::deleteDocumentRequest);
 		
 		listeningServer = getVertx().createHttpServer();
 	}
@@ -132,14 +130,14 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		//TODO : create method
 	}
 	
-	public void getRequest(RoutingContext routingContext) {
+	public void getRequest(RoutingContext routingContext, QueryType type) {
 		HttpServerResponse response = routingContext.response();
 		HttpServerRequest request = routingContext.request();
 		String path = request.path();
 		System.out.println("Received query " + path);
 		
 		System.out.println("Get request");
-		Optional<JsonObject> json = UrlToQuery.convertToJson(routingContext.request().path());
+		Optional<JsonObject> json = UrlToQuery.convertToJson(routingContext.request().path(), type);
 		System.out.println("request " + json.get().toString());
 		
 		processQuery(json.get().encode(), answer -> {

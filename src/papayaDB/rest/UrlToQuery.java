@@ -1,5 +1,8 @@
 package papayaDB.rest;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -28,6 +31,29 @@ public class UrlToQuery {
 	}
 
 	private static void put(JsonObject json, String key, String value, QueryType type) {
-		QueryParameter.getParameter().get(type).get(key)
+		System.out.println("TRY PUT : " + key);
+		if(!QueryParameter.getQueryParametersMap().get(type).containsKey(key)) {
+			return;
+		}
+		
+		
+		try {
+			System.out.println("call");
+			QueryParameter.getQueryParametersMap().get(type).get(key).getMethod("valueToJson", JsonObject.class, String.class).invoke(null, json, value);
+		} catch (IllegalAccessException e) {
+			return;
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			return;
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			return;
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			return;
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			return;
+		}
 	}
 }
