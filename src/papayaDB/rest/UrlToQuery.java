@@ -36,24 +36,8 @@ public class UrlToQuery {
 			return;
 		}
 		
+		System.out.println("call");
+		((QueryParameter) QueryParameter.getQueryParametersMap().get(type).get(key)).valueToJson(json, value);
 		
-		try {
-			System.out.println("call");
-			QueryParameter.getQueryParametersMap().get(type).get(key).getMethod("valueToJson", JsonObject.class, String.class).invoke(null, json, value);
-		} catch (IllegalAccessException e) {
-			return;
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			return;
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			return;
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			return;
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			return;
-		}
 	}
 }

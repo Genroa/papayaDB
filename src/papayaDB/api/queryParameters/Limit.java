@@ -1,29 +1,26 @@
 package papayaDB.api.queryParameters;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
-import papayaDB.db.Record;
 
 public class Limit extends QueryParameter {
 
 	public static void registerParameter() {
 		System.out.println("Ask to Register Method");
-		Map<String, Class<? extends QueryParameter>> param = new HashMap<String, Class<? extends QueryParameter>>();
-		param.put("limit", Limit.class);
-		QueryParameter.parameter.put(QueryType.GET, param);
+		QueryParameter.parameter.get(QueryType.GET).put("limit", new Limit());
 	}
 
-	public static JsonObject valueToJson(JsonObject json, String value) {
-		JsonObject params = QueryParameter.getParams(json);
+	public JsonObject valueToJson(JsonObject json, String value) {
+		JsonObject params = QueryParameter.getJsonParameters(json);
+		System.out.println(value);
 		json.put("parameters", params.put("limit", new JsonObject().put("value", Integer.parseInt(value))));
+		System.out.println("valueToJson = " + json);
 		return json;
 	}
 
-	public static Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<Record> elements) {
+	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
 		long maxSize = parameters.getLong("value");
 		return elements.limit(maxSize);
 	}

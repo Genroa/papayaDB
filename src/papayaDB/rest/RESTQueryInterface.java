@@ -16,6 +16,7 @@ import io.vertx.ext.web.RoutingContext;
 import papayaDB.api.QueryAnswer;
 import papayaDB.api.QueryType;
 import papayaDB.api.chainable.AbstractChainableQueryInterface;
+import papayaDB.api.queryParameters.QueryParameter;
 
 /**
  * Représente une interface web d'accès à une base de données, par l'intermédiaire de routes

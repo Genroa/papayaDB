@@ -18,15 +18,20 @@ import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
-import papayaDB.db.Record;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+
 public abstract class QueryParameter {
-	static final Map<QueryType, Map<String, Class<? extends QueryParameter>>> parameter = new HashMap<>();
+	static final Map<QueryType, Map<String, ? super QueryParameter>> parameter = new HashMap<>();
+	private static boolean isLoaded;
 	
 	static {
+		loadQueryParameter();
+	}
+	
+	private static void loadQueryParameter() {
 		for (QueryType qt: QueryType.values()) {
-			parameter.put(qt, new HashMap<String, Class<? extends QueryParameter>>());
+			parameter.put(qt, new HashMap<String, QueryParameter>());
 		}
 		
 		Class<?>[] clazz = null;
@@ -62,6 +67,7 @@ public abstract class QueryParameter {
 				}
 			}
 		}
+		isLoaded = true;
 	}
 	
 	private static Class<?>[] getClasses(String packageName) throws ClassNotFoundException, IOException {
@@ -94,10 +100,13 @@ public abstract class QueryParameter {
 												return Class.forName(packageName + '.' + f.getFileName().toString().substring(0, f.getFileName().toString().length() - 6));
 											} catch (ClassNotFoundException e) {
 												return null;
+											} finally {
+												files.close();
 											}
 										})
     									.filter(f -> f != null)
     									.collect(Collectors.toList());
+    	files.close();
     	return classes;
     }
 	
@@ -105,22 +114,25 @@ public abstract class QueryParameter {
 		throw new NotImplementedException();
 	}
 	
-	public static JsonObject valueToJson(JsonObject json, String value) {
+	public JsonObject valueToJson(JsonObject json, String value) {
 		throw new NotImplementedException();
 	}
 	
-	public static Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<Record> elements) {
+	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
 		throw new NotImplementedException();
 	}
 	
-	static JsonObject getParams(JsonObject json) {
+	static JsonObject getJsonParameters(JsonObject json) {
 		if(json.containsKey("parameters")) {
 			return json.getJsonObject("parameters");
 		}
 		return new JsonObject();
 	}
 	
-	public static Map<QueryType, Map<String, Class<? extends QueryParameter>>> getParameter() {
+	public static Map<QueryType, Map<String, ? super QueryParameter>> getQueryParametersMap() {
+		if(!isLoaded) {
+			loadQueryParameter();
+		}
 		return parameter;
 	}
 }
