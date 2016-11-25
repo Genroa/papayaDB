@@ -34,7 +34,7 @@ public class UrlToQuery {
 		if(params.length % 2 != 0) {
 			return Optional.empty();
 		} 
-		//put(json, "type", type.toString(), type);
+		put(json, "type", type.toString(), type);
 		put(json, "db", params[1], type);
 		for (int i = 2; i < params.length; i += 2) {
 			System.out.println(params[i] + " " + params[i+1]);
