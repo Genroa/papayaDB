@@ -33,7 +33,7 @@ public class UrlToQuery {
 		String[] params = url.substring(1).split(REGEX); //remove the first '/' and split at all others except if between " ".
 		if(params.length % 2 != 0) {
 			return Optional.empty();
-		}
+		} 
 		//put(json, "type", type.toString(), type);
 		put(json, "db", params[1], type);
 		for (int i = 2; i < params.length; i += 2) {

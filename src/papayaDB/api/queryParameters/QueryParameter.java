@@ -214,3 +214,4 @@ public abstract class QueryParameter {
 		return Optional.of((QueryParameter) getQueryParametersForType(type).get(key));
 	}
 }
+ 

@@ -33,3 +33,4 @@ public class Equals extends QueryParameter {
 		return null;
 	}
 }
+ 

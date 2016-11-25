@@ -24,3 +24,4 @@ public class Limit extends QueryParameter {
 		return elements.limit(maxSize);
 	}
 }
+ 

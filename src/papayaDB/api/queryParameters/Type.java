@@ -23,3 +23,4 @@ public class Type extends QueryParameter {
 		return null;
 	}
 }
+ 

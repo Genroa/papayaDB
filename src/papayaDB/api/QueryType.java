@@ -9,4 +9,4 @@ public enum QueryType {
 	UPDATE,
 	EXPORTALL,
 	DELETEDOCUMENT;
-}
+} 

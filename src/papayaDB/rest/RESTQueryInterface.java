@@ -48,7 +48,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		router.delete("/deletedocument/:dbname/:params").handler(x -> this.getRequest(x, QueryType.DELETEDOCUMENT));
 		
 		listeningServer = getVertx().createHttpServer();
-	}
+	} 
 	
 	@Override
 	public void start() throws Exception {
