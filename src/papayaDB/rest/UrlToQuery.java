@@ -1,8 +1,6 @@
 package papayaDB.rest;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.UndeclaredThrowableException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -21,7 +19,7 @@ public class UrlToQuery {
 		if(params.length % 2 != 0) {
 			return Optional.empty();
 		}
-		put(json, params[0], params[0], type);
+		put(json, "type", type.toString(), type);
 		put(json, "db", params[1], type);
 		for (int i = 2; i < params.length; i += 2) {
 			System.out.println(params[i] + " " + params[i+1]);
@@ -31,13 +29,12 @@ public class UrlToQuery {
 	}
 
 	private static void put(JsonObject json, String key, String value, QueryType type) {
-		System.out.println("TRY PUT : " + key);
-		if(!QueryParameter.getQueryParametersMap().get(type).containsKey(key)) {
+		System.out.println("TRY PUT : " + key + " with value " + value);
+		Optional<QueryParameter> query = QueryParameter.getQueryParameterKey(type, key);
+		if(!query.isPresent()) {
+			json = new JsonObject();
 			return;
 		}
-		
-		System.out.println("call");
-		((QueryParameter) QueryParameter.getQueryParametersMap().get(type).get(key)).valueToJson(json, value);
-		
+		query.get().valueToJson(json, value);
 	}
 }

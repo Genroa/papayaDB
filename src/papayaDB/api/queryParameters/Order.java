@@ -5,17 +5,19 @@ import java.util.stream.Stream;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
 
-public class Limit extends QueryParameter {
+public class Order extends QueryParameter {
 	public static void registerParameter() {
-		System.out.println("Ask to Register Method");
-		QueryParameter.parameter.get(QueryType.GET).put("limit", new Limit());
+		QueryParameter.parameter.get(QueryType.GET).put("order", new Order());
 	}
 
 	public JsonObject valueToJson(JsonObject json, String value) {
 		JsonObject params = QueryParameter.getJsonParameters(json);
-		System.out.println(value);
-		json.put("parameters", params.put("limit", new JsonObject().put("value", Integer.parseInt(value))));
-		System.out.println("valueToJson = " + json);
+		value = value.substring(1, value.length() - 1);
+		String[] values = value.split(";");
+		if(values.length != 2) {
+			//TODO: exception order;
+		}
+		json.put("parameters", params.put("order", new JsonObject().put("field", values[0]).put("way", values[1])));
 		return json;
 	}
 

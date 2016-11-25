@@ -13,6 +13,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -100,13 +101,10 @@ public abstract class QueryParameter {
 												return Class.forName(packageName + '.' + f.getFileName().toString().substring(0, f.getFileName().toString().length() - 6));
 											} catch (ClassNotFoundException e) {
 												return null;
-											} finally {
-												files.close();
 											}
 										})
     									.filter(f -> f != null)
     									.collect(Collectors.toList());
-    	files.close();
     	return classes;
     }
 	
@@ -129,10 +127,18 @@ public abstract class QueryParameter {
 		return new JsonObject();
 	}
 	
-	public static Map<QueryType, Map<String, ? super QueryParameter>> getQueryParametersMap() {
+	public static Map<String, ? super QueryParameter> getQueryParametersForType(QueryType type) {
 		if(!isLoaded) {
 			loadQueryParameter();
 		}
-		return parameter;
+		return parameter.get(type);
+	}
+	
+	public static Optional<QueryParameter> getQueryParameterKey(QueryType type, String key) {
+		if(!isLoaded) {
+			loadQueryParameter();
+		}
+		System.out.println("getQueryParamKey = " + type.toString() + " " + key);
+		return Optional.of((QueryParameter) getQueryParametersForType(type).get(key));
 	}
 }

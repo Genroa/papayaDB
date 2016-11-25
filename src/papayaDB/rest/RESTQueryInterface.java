@@ -40,12 +40,12 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 
 		router = Router.router(getVertx());
 		//router.get("/request/*").handler(this::onRESTQuery);		
-		router.post("/createdb/:name").handler(this::createDBRequest);
-		router.post("/insert/:dbname/:documentname").handler(this::insertRequest);
-		router.delete("/deletedb/:name").handler(this::deleteDBRequest);
-		router.get("/exportall/:dbname").handler(this::exportAllRequest);
+		router.post("/createdb/:name").handler(x -> this.getRequest(x, QueryType.CREATEDB));
+		router.post("/insert/:dbname/:documentname").handler(x -> this.getRequest(x, QueryType.INSERT));
+		router.delete("/deletedb/:name").handler(x -> this.getRequest(x, QueryType.DELETEDB));
+		router.get("/exportall/:dbname").handler(x -> this.getRequest(x, QueryType.EXPORTALL));
 		router.get("/get/*").handler(x -> this.getRequest(x, QueryType.GET));
-		router.delete("/deletedocument/:dbname/:params").handler(this::deleteDocumentRequest);
+		router.delete("/deletedocument/:dbname/:params").handler(x -> this.getRequest(x, QueryType.DELETEDOCUMENT));
 		
 		listeningServer = getVertx().createHttpServer();
 	}
