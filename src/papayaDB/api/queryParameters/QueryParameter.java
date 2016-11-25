@@ -22,25 +22,41 @@ import papayaDB.api.QueryType;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
+/**
+ * Classe abstraite représentant les différents paramètres de requete
+ */
 public abstract class QueryParameter {
+	/**
+	 * Map des différents paramètres de requete en fonction du type de requete.
+	 */
 	static final Map<QueryType, Map<String, ? super QueryParameter>> parameter = new HashMap<>();
+	/**
+	 * Permet de savoir si la classe est déjà chargée ou non.
+	 */
 	private static boolean isLoaded;
 	
 	static {
 		loadQueryParameter();
 	}
 	
+	/**
+	 * Méthode de chargement des différentes classes héritant de cette classe. Une instance est stockée dans la map, permettant 
+	 * d'appeller les méthode de ces classes dynamiquement.
+	 */
 	private static void loadQueryParameter() {
+		//Création de la map pour chaque type contenu dans les QueryType
 		for (QueryType qt: QueryType.values()) {
 			parameter.put(qt, new HashMap<String, QueryParameter>());
 		}
 		
 		Class<?>[] clazz = null;
 		try {
+			//Récupération des différentes classes du package
 			clazz = getClasses("papayaDB.api.queryParameters");
 		} catch (ClassNotFoundException | IOException e) {
 			
 		}
+		//pour chaque clesse si elle hérite de celle ci, on invoke sa méthode register pour qu'elle s'ajoute dans la bonne map.
 		for (Class<?> c : clazz) {
 			if(!c.getName().toString().endsWith("QueryParameter")) {
 				System.out.println("QP : " + c.getName());
@@ -68,9 +84,19 @@ public abstract class QueryParameter {
 				}
 			}
 		}
+		// Confirmation du chargement des différentes classes.
 		isLoaded = true;
 	}
 	
+	/**
+	 * Récupération des différentes classes d'un package
+	 * @param packageName
+	 * 				Nom du package dans lequel chercher les classes
+	 * @return
+	 * 				Retourne un tabeau des différentes classes du package
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
 	private static Class<?>[] getClasses(String packageName) throws ClassNotFoundException, IOException {
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		String path = packageName.replace('.', '/');
@@ -88,6 +114,17 @@ public abstract class QueryParameter {
 		return (Class[]) classes.toArray(new Class[classes.size()]);
 	}
 
+    /**
+     * Chargement des différentes classes d'un package
+     * @param directory
+     * 				Dossier à partir du quel charger les classes
+     * @param packageName
+     * 				Nom du package
+     * @return
+     * 				Renvoie une liste des classes trouvées
+     * @throws ClassNotFoundException
+     * @throws IOException
+     */
     private static List<Class<?>> findClasses(Path directory, String packageName) throws ClassNotFoundException, IOException {
     	/*if (Files.exists(directory)) {
     		return classes;
@@ -108,18 +145,44 @@ public abstract class QueryParameter {
     	return classes;
     }
 	
+	/**
+	 * Méthode à réimplémenter pour définir comment la classe s'enregistre.
+	 */
 	public static void registerParameter() {
 		throw new NotImplementedException();
 	}
 	
+	/**
+	 * Méthode permettant d'ajouter le la valeur dans le JSON.
+	 * Chaque classe qui hérite de {@link QueryParameter} connait la clé à ajouter et la méthode d'ajout.
+	 * 
+	 * @param json
+	 * 				{@link JsonObject} dans lequel ajouter la valeur
+	 * @param value
+	 * 				Valeur à ajouter
+	 * @return
+	 * 				Renvoie le {@link JsonObject} modifié. Il revient avec une erreur dans le cas où la classe à rencontré un soucis de traitement.
+	 */
 	public JsonObject valueToJson(JsonObject json, String value) {
 		throw new NotImplementedException();
 	}
 	
+	/**
+	 * @param parameters
+	 * @param elements
+	 * @return
+	 */
 	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
 		throw new NotImplementedException();
 	}
 	
+	/**
+	 * Renvoie le {@link JsonObject} associé au mot clé parameters du json donné 
+	 * @param json
+	 * 				{@link JsonObject} sur lequel chercher le champ parameters
+	 * @return
+	 * 				Le {@link JsonObject} parameters ou un {@link JsonObject} vide si la clé parameters n'existe pas
+	 */
 	static JsonObject getJsonParameters(JsonObject json) {
 		if(json.containsKey("parameters")) {
 			return json.getJsonObject("parameters");
@@ -127,6 +190,10 @@ public abstract class QueryParameter {
 		return new JsonObject();
 	}
 	
+	/**
+	 * @param type
+	 * @return
+	 */
 	public static Map<String, ? super QueryParameter> getQueryParametersForType(QueryType type) {
 		if(!isLoaded) {
 			loadQueryParameter();
@@ -134,6 +201,11 @@ public abstract class QueryParameter {
 		return parameter.get(type);
 	}
 	
+	/**
+	 * @param type
+	 * @param key
+	 * @return
+	 */
 	public static Optional<QueryParameter> getQueryParameterKey(QueryType type, String key) {
 		if(!isLoaded) {
 			loadQueryParameter();

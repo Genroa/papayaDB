@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
 
 public class Equals extends QueryParameter {
+	
 	public static void registerParameter() {
 		QueryParameter.parameter.get(QueryType.GET).put("equals", new Equals());
 		QueryParameter.parameter.get(QueryType.UPDATE).put("equals", new Equals());
