@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -67,13 +68,13 @@ public class FileStorageManager implements StorageManager {
 		MappedByteBuffer bufferedFile = file.map(MapMode.READ_ONLY, 0, fileSize);
 		bufferedFile.getInt();
 		try {
-			System.out.println("Loading "+recordsNumber+" records...");
+//			System.out.println("Loading "+recordsNumber+" records...");
 			for(int i = 0; i < recordsNumber;) {
 				
 				int objectSize = bufferedFile.getInt();
 				if(objectSize == EMPTY_CHUNK_SECTION) {
 					int nextObjectPositionInChunks = bufferedFile.getInt();
-					System.out.println("Hole found : "+nextObjectPositionInChunks+" chunks");
+//					System.out.println("Hole found : "+nextObjectPositionInChunks+" chunks");
 					registerChunkSectionAsHole(bufferedFile.position()-(Integer.BYTES*2), nextObjectPositionInChunks);
 					
 					// Position + nouvelle position en chunks (relatifs) - la lecture de l'int indiquant la nouvelle position
@@ -106,11 +107,49 @@ public class FileStorageManager implements StorageManager {
 	 * @param positionInFile la position en bytes dans le fichier
 	 * @param chunkNumber le nombre de chunks vides à partir de cette position
 	 */
-	private void registerChunkSectionAsHole(int positionInFile, int chunkNumber) {
+	private int[] registerChunkSectionAsHole(Integer positionInFile, Integer chunkNumber) {
+		int holePosition = positionInFile;
+		
+		// Essaie de trouver si la section suivante est le début d'un trou ou pas
+		int nextSectionPosition = positionInFile+chunkNumber*CHUNK_SIZE;
+		Entry<Integer, ArrayList<Integer>> nextHoleEntry = holesMap.entrySet().stream()
+																		.filter(currentEntry -> currentEntry.getValue().contains(nextSectionPosition))
+																		.findFirst()
+																		.orElse(null);
+		
+		// Si la fin de la section à effacer est bien le début d'un trou, on agrandit le trou
+		if(nextHoleEntry != null) {
+			int holeSizeInChunks = nextHoleEntry.getKey();
+			ArrayList<Integer> holes = nextHoleEntry.getValue();
+//			System.out.println("Found a hole section just right after the one to create : "+nextSectionPosition+" in "+holes+" (chunks size "+holeSizeInChunks+")");
+			holes.remove((Integer) nextSectionPosition);
+			chunkNumber += holeSizeInChunks;
+		}
+		
+		// Essaie de trouver la section précédente vide si elle existe
+		Entry<Integer, ArrayList<Integer>> previousHoleEntry = holesMap.entrySet().stream()
+																				.filter(currentEntry -> currentEntry.getValue().contains(positionInFile - currentEntry.getKey()*CHUNK_SIZE))
+																				.findFirst()
+																				.orElse(null);
+		// S'il y a bien une entrée avant
+		if(previousHoleEntry != null) {
+			int holeSizeInChunks = previousHoleEntry.getKey();
+			ArrayList<Integer> holes = previousHoleEntry.getValue();
+			int previousSectionPosition = positionInFile - holeSizeInChunks*CHUNK_SIZE;
+			
+			holes.remove((Integer) previousSectionPosition);
+			holePosition = previousSectionPosition;
+			chunkNumber += holeSizeInChunks;
+		}
+		
+		
+		
 		ArrayList<Integer> emptyChunksOfThisSize = holesMap.getOrDefault(chunkNumber, new ArrayList<>());
-		emptyChunksOfThisSize.add(positionInFile);
+		emptyChunksOfThisSize.add(holePosition);
 		holesMap.put(chunkNumber, emptyChunksOfThisSize);
-		System.out.println(holesMap);
+		lookAtHoles();
+		System.out.println("Returning real free size: "+chunkNumber);
+		return new int[]{holePosition, chunkNumber};
 	}
 
 	@Override
@@ -121,7 +160,7 @@ public class FileStorageManager implements StorageManager {
 		newObject.put("_uid", UUID.randomUUID().toString());
 		b.appendBytes(newObject.toString().getBytes());
 		int neededSize = computeChunkSize(b.length()+Integer.BYTES);
-		System.out.println("New record will need "+(int) Math.ceil((double) b.length()/ (double) CHUNK_SIZE)+" chunks of size "+CHUNK_SIZE+" (real size: "+b.length()+")");
+//		System.out.println("New record will need "+(int) Math.ceil((double) b.length()/ (double) CHUNK_SIZE)+" chunks of size "+CHUNK_SIZE+" (real size: "+b.length()+")");
 		try {
 			int position = findSuitablePositionToWrite(neededSize);
 			MappedByteBuffer buffer = file.map(MapMode.READ_WRITE, position, neededSize);
@@ -154,9 +193,20 @@ public class FileStorageManager implements StorageManager {
 		}
 		
 		FileRecord fileRecord = (FileRecord) record;
+		
 		int chunkSize = fileRecord.getChunkSize();
 		int position = fileRecord.getPositionInFile();
-		registerChunkSectionAsHole(position, chunkSize/CHUNK_SIZE);
+		int[] infos = registerChunkSectionAsHole(position, chunkSize/CHUNK_SIZE);
+		
+		MappedByteBuffer buffer;
+		try {
+			buffer = file.map(MapMode.READ_WRITE, infos[0], Integer.BYTES*2);
+			buffer.putInt(EMPTY_CHUNK_SECTION);
+			buffer.putInt(infos[1]);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		updateRecordsNumber(recordsNumber-1);
 	}
 
@@ -205,22 +255,24 @@ public class FileStorageManager implements StorageManager {
 			
 			// Si pas de place de cette taille
 			if(holes.size() == 0) {
-				System.out.println("No hole of size "+holeSize+" available");
+//				System.out.println("No hole of size "+holeSize+" available");
 				continue;
 			}
 			
-			System.out.println("Holes of size "+holeSize+" found, insertion...");
+//			lookAtHoles();
+//			System.out.println("Holes of size "+holeSize+" found, insertion...");
 			// On a trouvé une place; modifier la holesMap en conséquence
 			// Size = hole : on a juste comblé un trou
 			if(holeSize == chunkNumber) {
 				insertionPosition = holes.remove(0);
 			} else {
-				// Size > hole : on doit déplacer le trou dans le nouvel emplacement et placerle insertionPosition correctement
+				// Size > hole : on doit déplacer le trou dans le nouvel emplacement et placer le insertionPosition correctement
 				insertionPosition = holes.remove(0);
 				int newHolePosition = insertionPosition+chunkNumber*CHUNK_SIZE;
 				int newHoleSize = holeSize-chunkNumber;
-				registerChunkSectionAsHole(newHolePosition, newHoleSize);
-				
+				int[] infos = registerChunkSectionAsHole(newHolePosition, newHoleSize);
+				newHolePosition = infos[0];
+				newHoleSize = infos[1];
 				// Ecrire de nouveau les informations de chunk vide
 				MappedByteBuffer buffer = file.map(MapMode.READ_WRITE, newHolePosition, Integer.BYTES*2);
 				buffer.putInt(EMPTY_CHUNK_SECTION);
@@ -231,12 +283,12 @@ public class FileStorageManager implements StorageManager {
 		
 		// On n'a pas trouvé de trou qui convienne : insertion en fin de fichier
 		if(insertionPosition == -1) {
-			System.out.println("Didn't find fitting hole : appending");
+//			System.out.println("Didn't find fitting hole : appending");
 			insertionPosition = (int) file.size();
 			rafile.setLength(insertionPosition+sizeOfChunkInBytes);
 			file = rafile.getChannel();
 		}
-		
+//		lookAtHoles();
 		return insertionPosition;
 	}
 	
@@ -275,14 +327,10 @@ public class FileStorageManager implements StorageManager {
 		@Override
 		public void deleteRecord() {
 			// Vider pour debug
-//			buffer.rewind();
-//			for(int i =0; i<buffer.capacity(); i++) {
-//				buffer.put((byte) 0);
-//			}
-			
 			buffer.rewind();
-			buffer.putInt(-1);
-			buffer.putInt(getChunkSize()/CHUNK_SIZE);
+			for(int i =0; i<buffer.capacity(); i++) {
+				buffer.put((byte) 0);
+			}
 			storageManager.deleteRecord(this);
 		}
 
@@ -329,14 +377,17 @@ public class FileStorageManager implements StorageManager {
 		FileStorageManager sm = new FileStorageManager("testDb");
 		sm.loadRecords();
 		
-//		Record r = sm.createNewRecord(new JsonObject().put("une clef", "test valeur"));
-//		Record r2 = sm.createNewRecord(new JsonObject().put("une clef", "test valeur"));
-//		Record r3 = sm.createNewRecord(new JsonObject().put("une clef", "test valeur"));
-//		r2.deleteRecord();
-		
-		Record smallRecord = sm.createNewRecord(new JsonObject().put("a", "t"));
-		
-		
+		Record r = sm.createNewRecord(new JsonObject().put("a", "t"));
+		Record r2 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		Record r3 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		Record r4 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		Record r5 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		Record r6 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		r4.deleteRecord();
+		r2.deleteRecord();
+		r3.deleteRecord();
+		Record r7 = sm.createNewRecord(new JsonObject().put("a", "t"));
+//		Record r8 = sm.createNewRecord(new JsonObject().put("a", "t"));
 		
 		sm.lookAtHoles();
 	}
