@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
-import papayaDB.api.QueryParameters;
+import papayaDB.api.QueryType;
+import papayaDB.api.queryParameters.QueryParameter;
 
 /**
  * Classe représentant une Collection de base de données.
@@ -43,22 +45,25 @@ public class DatabaseCollection {
 		this.elements = storageFile.loadRecords();
 	}
 	
-	private Stream<Record> processParameters(Stream<Record> elements, JsonObject query) {
-		Stream<Record> result = elements;
+	private Stream<JsonObject> processParameters(Stream<JsonObject> elements, JsonObject query) {
+		Stream<JsonObject> result = elements;
 		JsonObject parametersContainer = query.getJsonObject("parameters");
 		for(String parameter : parametersContainer.fieldNames()) {
 			JsonObject parameters = parametersContainer.getJsonObject(parameter);
-			result = QueryParameters.valueOf(parameter.toUpperCase()).processQueryParameters(parameters, result);
+			Optional<QueryParameter> queryParameter = QueryParameter.getQueryParameterKey(QueryType.GET, parameter);
+			if(queryParameter.isPresent()) {
+				result = queryParameter.get().processQueryParameters(parameters, result);
+			}
 		}
 		return result;
 	}
 	
 	public List<JsonObject> searchRecords(JsonObject query) {
 		System.out.println("Searching records...");
-		Stream<Record> res = elements.values().stream();
+		Stream<JsonObject> res = elements.values().stream().map(record -> record.getRecord());
 		
 		res = processParameters(res, query);
 		
-		return res.map(record -> record.getRecord()).collect(Collectors.toList());
+		return res.collect(Collectors.toList());
 	}
 }

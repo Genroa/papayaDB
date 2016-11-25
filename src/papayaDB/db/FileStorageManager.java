@@ -147,8 +147,6 @@ public class FileStorageManager implements StorageManager {
 		ArrayList<Integer> emptyChunksOfThisSize = holesMap.getOrDefault(chunkNumber, new ArrayList<>());
 		emptyChunksOfThisSize.add(holePosition);
 		holesMap.put(chunkNumber, emptyChunksOfThisSize);
-		lookAtHoles();
-		System.out.println("Returning real free size: "+chunkNumber);
 		return new int[]{holePosition, chunkNumber};
 	}
 
