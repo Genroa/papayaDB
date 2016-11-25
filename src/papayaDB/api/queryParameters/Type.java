@@ -14,7 +14,7 @@ public class Type extends QueryParameter {
 	}
 
 	public JsonObject valueToJson(JsonObject json, String value) {
-		json.put("get", value);
+		json.put("type", value);
 		return json;
 	}
 
