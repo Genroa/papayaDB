@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
+import papayaDB.api.SyntaxErrorException;
 
 public class Fields extends QueryParameter {
 	public static void registerParameter() {
@@ -29,10 +30,21 @@ public class Fields extends QueryParameter {
 		json.put("parameters", params.put("fields", new JsonObject().put("value", array)));
 		return json;
 	}
-
+	
+	// L'ordre d'appel des queryParameters compte!
 	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
-		//TODO;
-		return null;
+		JsonArray array = parameters.getJsonArray("value");
+		
+		return elements.filter(json -> {
+			for(Object field : array) {
+				if(! (field instanceof String)) {
+					// TODO l'exception ne sert à rien ici (lambda), revoir ce code
+					throw new SyntaxErrorException("Field "+field+" must be a field name, represented by a string");
+				}
+				if(!json.containsKey((String) field)) return false;
+			}
+			return true;
+		});
 	}
 }
  

@@ -27,10 +27,5 @@ public class Equals extends QueryParameter {
 		json.put("parameters", params.put("equals", new JsonObject().put("value", equals)));
 		return json;
 	}
-
-	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
-		//TODO;
-		return null;
-	}
 }
  

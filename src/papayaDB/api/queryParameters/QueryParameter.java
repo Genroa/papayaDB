@@ -104,8 +104,8 @@ public abstract class QueryParameter {
 		List<Path> dirs = new ArrayList<>();
 		while (resources.hasMoreElements()) {
 			URL resource = (URL) resources.nextElement();
-			
-			dirs.add(Paths.get(resource.getPath()));
+			// Fix pour les path Windows
+			dirs.add(Paths.get(resource.getPath().replaceFirst("^/(.:/)", "$1")));
 		}
 		ArrayList<Class<?>> classes = new ArrayList<>();
 		for (Path directory : dirs) {
@@ -173,7 +173,7 @@ public abstract class QueryParameter {
 	 * @return
 	 */
 	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
-		throw new NotImplementedException();
+		return elements;
 	}
 	
 	/**
@@ -210,7 +210,7 @@ public abstract class QueryParameter {
 		if(!isLoaded) {
 			loadQueryParameter();
 		}
-		System.out.println("getQueryParamKey = " + type.toString() + " " + key);
+//		System.out.println("getQueryParamKey = " + type.toString() + " " + key);
 		return Optional.of((QueryParameter) getQueryParametersForType(type).get(key));
 	}
 }

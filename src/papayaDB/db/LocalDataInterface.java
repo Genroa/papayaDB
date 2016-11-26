@@ -57,7 +57,8 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			return;
 		}
 		
-		if(jsonQuery.getString("type").equals("get")) {
+		if(jsonQuery.getString("type").equals("GET")) {
+			System.out.println("Get request, let's launch searchRecords...");
 			answer.put("status", QueryAnswerStatus.OK.name());
 			answer.put("data", new JsonArray(collection.searchRecords(jsonQuery)));
 		} else { /* type inconnu */

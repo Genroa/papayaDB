@@ -17,10 +17,5 @@ public class DB extends QueryParameter {
 		json.put("db", value);
 		return json;
 	}
-
-	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
-		//TODO;
-		return null;
-	}
 }
  

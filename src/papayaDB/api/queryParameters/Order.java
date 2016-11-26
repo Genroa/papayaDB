@@ -1,7 +1,5 @@
 package papayaDB.api.queryParameters;
 
-import java.util.stream.Stream;
-
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
 
@@ -19,11 +17,6 @@ public class Order extends QueryParameter {
 		}
 		json.put("parameters", params.put("order", new JsonObject().put("field", values[0]).put("way", values[1])));
 		return json;
-	}
-
-	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
-		long maxSize = parameters.getLong("value");
-		return elements.limit(maxSize);
 	}
 }
  

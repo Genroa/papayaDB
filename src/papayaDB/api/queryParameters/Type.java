@@ -1,7 +1,5 @@
 package papayaDB.api.queryParameters;
 
-import java.util.stream.Stream;
-
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
 
@@ -16,11 +14,6 @@ public class Type extends QueryParameter {
 	public JsonObject valueToJson(JsonObject json, String value) {
 		json.put("type", value);
 		return json;
-	}
-
-	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
-		//TODO;
-		return null;
 	}
 }
  
