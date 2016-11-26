@@ -4,6 +4,7 @@ import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
+import papayaDB.api.SyntaxErrorException;
 
 public class Limit extends QueryParameter {
 	public static void registerParameter() {
@@ -11,10 +12,15 @@ public class Limit extends QueryParameter {
 		QueryParameter.parameter.get(QueryType.GET).put("limit", new Limit());
 	}
 
-	public JsonObject valueToJson(JsonObject json, String value) {
+	public JsonObject valueToJson(JsonObject json, String value) throws SyntaxErrorException {
 		JsonObject params = QueryParameter.getJsonParameters(json);
-		System.out.println(value);
-		json.put("parameters", params.put("limit", new JsonObject().put("value", Integer.parseInt(value))));
+		int intValue;
+		try {
+			intValue = Integer.parseInt(value);
+		} catch (NumberFormatException e) {
+			throw new SyntaxErrorException("limit parameter must be a number");
+		}
+		json.put("parameters", params.put("limit", new JsonObject().put("value", intValue)));
 		System.out.println("valueToJson = " + json);
 		return json;
 	}

@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
+import papayaDB.api.SyntaxErrorException;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
@@ -163,7 +164,7 @@ public abstract class QueryParameter {
 	 * @return
 	 * 				Renvoie le {@link JsonObject} modifié. Il revient avec une erreur dans le cas où la classe à rencontré un soucis de traitement.
 	 */
-	public JsonObject valueToJson(JsonObject json, String value) {
+	public JsonObject valueToJson(JsonObject json, String value) throws SyntaxErrorException {
 		throw new NotImplementedException();
 	}
 	
@@ -211,7 +212,7 @@ public abstract class QueryParameter {
 			loadQueryParameter();
 		}
 //		System.out.println("getQueryParamKey = " + type.toString() + " " + key);
-		return Optional.of((QueryParameter) getQueryParametersForType(type).get(key));
+		return Optional	.ofNullable((QueryParameter) getQueryParametersForType(type).get(key));
 	}
 }
  

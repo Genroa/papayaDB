@@ -1,11 +1,14 @@
 package papayaDB.rest;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
+import papayaDB.api.QueryAnswerStatus;
 import papayaDB.api.QueryType;
+import papayaDB.api.SyntaxErrorException;
 import papayaDB.api.queryParameters.QueryParameter;
 
 /**
@@ -15,11 +18,11 @@ public class UrlToQuery {
 	/**
 	 * Expression régulière permettant de découper les slash en ne prenant pas en compte les slashs entre quotes (%22)
 	 */
-	private static final String REGEX = "\\/(?=(?:[^%22]*%22[^%22]*%22)*[^%22]*$)";
+	private static final String REGEX = "\\/(?!(?<=%22\\/)|(?=%22))";
 	
 	
 	/**
-	 * CLasse de conversion d'une URL en JSON en fonction du type de requete.
+	 * Méthode de conversion d'une URL en JSON en fonction du type de requete.
 	 * @param url
 	 * 			URL de la requete
 	 * @param type
@@ -27,41 +30,57 @@ public class UrlToQuery {
 	 * @return
 	 * 			Renvoie un {@link Optional} de {@link JsonObject} représentant la requete à envoyer au serveur.
 	 */
-	public static Optional<JsonObject> convertToJson(String url, QueryType type) {
+	public static JsonObject convertToJson(String url, QueryType type) {
 		JsonObject json = new JsonObject();
 		Objects.requireNonNull(url);
 		String[] params = url.substring(1).split(REGEX); //remove the first '/' and split at all others except if between " ".
 		if(params.length % 2 != 0) {
-			return Optional.empty();
+			generateErrorMessage(json, "invalid number of query parameters");
+			return json;
 		} 
+		System.out.println(Arrays.toString(params));
+		System.out.println("param1 = " + params[1]);
 		put(json, "db", params[1], type);
 		put(json, "type", type.toString(), type);
-		
 		for (int i = 2; i < params.length; i += 2) {
 			System.out.println(params[i] + " " + params[i+1]);
-			put(json, params[i], params[i+1], type);
+			if(!put(json, params[i], params[i+1], type)) {
+				break;
+			}
 		}
-		return Optional.of(json);
+		return json;
 	}
 
 	/**
-	 * Classe privée permettant d'ajouter un élément dans le fichier JSON
+	 * Méthode privée permettant d'ajouter un élément dans le fichier JSON
 	 * @param json
 	 * 			Document JSON à mettre à jour
 	 * @param key
 	 * 			Clé d'ajout
 	 * @param value
-	 * 			Valeur correspondant à j'ajout (correspond au morceau de la requete
+	 * 			Valeur correspondant à j'ajout (correspond au morceau de la requete)
 	 * @param type
 	 * 			Type de requete
 	 */
-	private static void put(JsonObject json, String key, String value, QueryType type) {
-		System.out.println("TRY PUT : " + key + " with value " + value);
+	private static boolean put(JsonObject json, String key, String value, QueryType type) {
+		//System.out.println("TRY PUT : " + key + " with value " + value);
 		Optional<QueryParameter> query = QueryParameter.getQueryParameterKey(type, key);
 		if(!query.isPresent()) {
-			json = new JsonObject();
-			return;
+			generateErrorMessage(json, "parameter " + key + " doesn't exists");
+			return false;
 		}
-		query.get().valueToJson(json, value);
+		try {
+			query.get().valueToJson(json, value);
+		} catch (SyntaxErrorException e) {
+			generateErrorMessage(json, e.getMessage());
+			return false;
+		}
+		return true;
+	}
+	
+	private static void generateErrorMessage(JsonObject json, String message) {
+		json.clear();
+		json.put("status", QueryAnswerStatus.SYNTAX_ERROR);
+		json.put("message", message);
 	}
 }

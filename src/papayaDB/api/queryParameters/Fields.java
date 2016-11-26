@@ -17,7 +17,10 @@ public class Fields extends QueryParameter {
 
 	public JsonObject valueToJson(JsonObject json, String value) {
 		JsonObject params = QueryParameter.getJsonParameters(json);
+		JsonObject fields = new JsonObject();
 		JsonArray array = new JsonArray();
+		//Indique quand appeller le code pour filtrer sur les champs si params est vide, on l'appelle au début sinon à la fin.
+		fields.put("call", params.isEmpty()?"begin":"end");
 		if(value.charAt(0) == '[' && value.charAt(value.length()-1) == ']') {
 			value = value.substring(1, value.length() - 1);
 			String[] values = value.split(",");
@@ -27,7 +30,8 @@ public class Fields extends QueryParameter {
 		} else {
 			array.add(value);
 		}
-		json.put("parameters", params.put("fields", new JsonObject().put("value", array)));
+		fields.put("value", array);
+		json.put("parameters", params.put("fields", fields));
 		return json;
 	}
 	

@@ -138,10 +138,14 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		System.out.println("Received query " + path);
 		
 		System.out.println("Get request");
-		Optional<JsonObject> json = UrlToQuery.convertToJson(routingContext.request().path(), type);
-		System.out.println("request " + json.get().toString());
+		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), type);
+		if(json.containsKey("status")) {
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(json));
+			return;
+		}
 		
-		processQuery(json.get().encode(), answer -> {
+		processQuery(json.encode(), answer -> {
 			response.putHeader("content-type", "application/json")
 			.end(Json.encodePrettily(answer.getData()));
 		});
