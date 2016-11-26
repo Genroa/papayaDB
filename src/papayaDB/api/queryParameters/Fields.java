@@ -44,6 +44,12 @@ public class Fields extends QueryParameter {
 				if(!json.containsKey((String) field)) return false;
 			}
 			return true;
+		}).map(oldJson -> {
+			JsonObject newJson = new JsonObject();
+			for(Object field : array) {
+				newJson.put((String)field, oldJson.getValue((String) field));
+			}
+			return newJson;
 		});
 	}
 }
