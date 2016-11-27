@@ -40,8 +40,12 @@ public class UrlToQuery {
 		} 
 		System.out.println(Arrays.toString(params));
 		System.out.println("param1 = " + params[1]);
-		put(json, "db", params[1], type);
-		put(json, "type", type.toString(), type);
+		if(!put(json, "db", params[1], type)) {
+			return json;
+		}
+		if(!put(json, "type", type.toString(), type)) {
+			return json;
+		}
 		for (int i = 2; i < params.length; i += 2) {
 			System.out.println(params[i] + " " + params[i+1]);
 			if(!put(json, params[i], params[i+1], type)) {

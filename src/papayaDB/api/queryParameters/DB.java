@@ -4,6 +4,7 @@ import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.QueryType;
+import papayaDB.api.SyntaxErrorException;
 
 public class DB extends QueryParameter {
 	public static void registerParameter() {
@@ -13,7 +14,10 @@ public class DB extends QueryParameter {
 		
 	}
 
-	public JsonObject valueToJson(JsonObject json, String value) {
+	public JsonObject valueToJson(JsonObject json, String value) throws SyntaxErrorException {
+		if(value.equals("")) {
+			throw new SyntaxErrorException("You must specify a database name");
+		}
 		json.put("db", value);
 		return json;
 	}
