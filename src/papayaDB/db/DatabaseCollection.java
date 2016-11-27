@@ -64,6 +64,6 @@ public class DatabaseCollection {
 		
 		res = processParameters(res, query);
 		
-		return res.map(json-> {json.remove("_uid"); return json;}).collect(Collectors.toList());
+		return res.collect(Collectors.toList());
 	}
 }
