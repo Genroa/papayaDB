@@ -6,9 +6,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
-import papayaDB.api.QueryAnswerStatus;
-import papayaDB.api.QueryType;
-import papayaDB.api.SyntaxErrorException;
+import papayaDB.api.query.QueryAnswerStatus;
+import papayaDB.api.query.QueryType;
+import papayaDB.api.query.SyntaxErrorException;
 import papayaDB.api.queryParameters.QueryParameter;
 
 /**

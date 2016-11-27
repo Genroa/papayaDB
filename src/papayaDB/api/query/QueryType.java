@@ -1,4 +1,4 @@
-package papayaDB.api;
+package papayaDB.api.query;
 
 public enum QueryType {
 	GET,

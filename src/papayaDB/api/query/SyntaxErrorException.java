@@ -1,4 +1,4 @@
-package papayaDB.api;
+package papayaDB.api.query;
 
 import java.io.UncheckedIOException;
 

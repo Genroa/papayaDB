@@ -8,9 +8,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
-import papayaDB.api.QueryAnswer;
-import papayaDB.api.QueryAnswerStatus;
-import papayaDB.api.chainable.AbstractChainableQueryInterface;
+import papayaDB.api.query.AbstractChainableQueryInterface;
+import papayaDB.api.query.QueryAnswer;
+import papayaDB.api.query.QueryAnswerStatus;
 
 public class LocalDataInterface extends AbstractChainableQueryInterface {
 	private final NetServer tcpServer;

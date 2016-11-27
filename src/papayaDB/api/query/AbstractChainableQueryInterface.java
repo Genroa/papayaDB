@@ -1,11 +1,9 @@
-package papayaDB.api.chainable;
+package papayaDB.api.query;
 
 import java.util.function.Consumer;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
-import papayaDB.api.QueryAnswer;
-import papayaDB.api.QueryInterface;
 
 /**
  * Cette classe abstraite implémente les concepts communs aux "interfaces chainées" : des interfaces de requête pouvant traiter celles qu'elles reçoivent en les renvoyant vers d'autres (ou pas).

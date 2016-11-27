@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
-import papayaDB.api.QueryType;
+import papayaDB.api.query.QueryType;
 import papayaDB.api.queryParameters.QueryParameter;
 
 /**

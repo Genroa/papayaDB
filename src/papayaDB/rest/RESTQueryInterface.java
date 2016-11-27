@@ -13,9 +13,9 @@ import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetSocket;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import papayaDB.api.QueryAnswer;
-import papayaDB.api.QueryType;
-import papayaDB.api.chainable.AbstractChainableQueryInterface;
+import papayaDB.api.query.AbstractChainableQueryInterface;
+import papayaDB.api.query.QueryAnswer;
+import papayaDB.api.query.QueryType;
 import papayaDB.api.queryParameters.QueryParameter;
 
 /**

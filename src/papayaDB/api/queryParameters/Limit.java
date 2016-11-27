@@ -3,8 +3,8 @@ package papayaDB.api.queryParameters;
 import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
-import papayaDB.api.QueryType;
-import papayaDB.api.SyntaxErrorException;
+import papayaDB.api.query.QueryType;
+import papayaDB.api.query.SyntaxErrorException;
 
 public class Limit extends QueryParameter {
 	public static void registerParameter() {

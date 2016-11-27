@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import papayaDB.api.QueryType;
+import papayaDB.api.query.QueryType;
 
 public class Equals extends QueryParameter {
 	

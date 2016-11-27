@@ -1,4 +1,4 @@
-package papayaDB.api;
+package papayaDB.api.query;
 
 /**
  * Définit le status de la requête.

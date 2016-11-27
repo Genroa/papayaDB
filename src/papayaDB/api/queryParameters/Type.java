@@ -1,7 +1,7 @@
 package papayaDB.api.queryParameters;
 
 import io.vertx.core.json.JsonObject;
-import papayaDB.api.QueryType;
+import papayaDB.api.query.QueryType;
 
 public class Type extends QueryParameter {
 	public static void registerParameter() {

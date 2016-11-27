@@ -1,11 +1,10 @@
-package papayaDB.api.chainable;
+package papayaDB.api.query;
 
 
 import java.util.Objects;
 import java.util.function.Consumer;
 
 import io.vertx.core.http.HttpClient;
-import papayaDB.api.QueryAnswer;
 
 /**
  * Cette classe représente une connexion utilisateur (un "noeud de tête") pour faire des requêtes sur un noeud papayaDB.

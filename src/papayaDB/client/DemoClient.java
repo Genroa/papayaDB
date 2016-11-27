@@ -1,6 +1,6 @@
 package papayaDB.client;
 
-import papayaDB.api.chainable.HttpQueryInterface;
+import papayaDB.api.query.HttpQueryInterface;
 
 public class DemoClient {
 	public static void main(String[] args) {

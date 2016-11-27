@@ -2,7 +2,7 @@ package papayaDB.api.queryParameters;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import papayaDB.api.QueryType;
+import papayaDB.api.query.QueryType;
 
 public class Bounds extends QueryParameter {
 	public static void registerParameter() {
