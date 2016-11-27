@@ -40,12 +40,12 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 
 		router = Router.router(getVertx());
 		//router.get("/request/*").handler(this::onRESTQuery);		
-		router.post("/createdb/:name").handler(x -> this.getRequest(x, QueryType.CREATEDB));
-		router.post("/insert/:dbname/:documentname").handler(x -> this.getRequest(x, QueryType.INSERT));
-		router.delete("/deletedb/:name").handler(x -> this.getRequest(x, QueryType.DELETEDB));
-		router.get("/exportall/:dbname").handler(x -> this.getRequest(x, QueryType.EXPORTALL));
-		router.get("/get/*").handler(x -> this.getRequest(x, QueryType.GET));
-		router.delete("/deletedocument/:dbname/:params").handler(x -> this.getRequest(x, QueryType.DELETEDOCUMENT));
+		router.post("/createdb/:name").handler(x -> this.onRESTQuery(x, QueryType.CREATEDB));
+		router.post("/insert/:dbname/:documentname").handler(x -> this.onRESTQuery(x, QueryType.INSERT));
+		router.delete("/deletedb/:name").handler(x -> this.onRESTQuery(x, QueryType.DELETEDB));
+		router.get("/exportall/:dbname").handler(x -> this.onRESTQuery(x, QueryType.EXPORTALL));
+		router.get("/get/*").handler(x -> this.onRESTQuery(x, QueryType.GET));
+		router.delete("/deletedocument/:dbname/:params").handler(x -> this.onRESTQuery(x, QueryType.DELETEDOCUMENT));
 		
 		listeningServer = getVertx().createHttpServer();
 	} 
@@ -98,40 +98,8 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		});
 		
 	}
-
-	public void onRESTQuery(RoutingContext routingContext) {
-		HttpServerResponse response = routingContext.response();
-		HttpServerRequest request = routingContext.request();
-		String path = request.path();
-
-		System.out.println("Received query " + path);
-		
-		processQuery(path, answer -> {
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(answer.getData()));
-		});
-	}
 	
-	public void createDBRequest(RoutingContext routingContext) {
-		//TODO : create method
-	}
-	
-	public void deleteDBRequest(RoutingContext routingContext) {
-		System.out.println("Delete DB request");
-		//TODO : create method
-	}
-	
-	public void exportAllRequest(RoutingContext routingContext) {
-		System.out.println("Export All request");
-		//TODO : create method
-	}
-	
-	public void insertRequest(RoutingContext routingContext) {
-		System.out.println("Insert request");
-		//TODO : create method
-	}
-	
-	public void getRequest(RoutingContext routingContext, QueryType type) {
+	public void onRESTQuery(RoutingContext routingContext, QueryType type) {
 		HttpServerResponse response = routingContext.response();
 		HttpServerRequest request = routingContext.request();
 		String path = request.path();
