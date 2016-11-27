@@ -1,6 +1,5 @@
 package papayaDB.rest;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import io.vertx.core.http.HttpServer;
@@ -8,15 +7,12 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.NetClient;
-import io.vertx.core.net.NetClientOptions;
-import io.vertx.core.net.NetSocket;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import papayaDB.api.query.AbstractChainableQueryInterface;
 import papayaDB.api.query.QueryAnswer;
+import papayaDB.api.query.QueryInterface;
 import papayaDB.api.query.QueryType;
-import papayaDB.api.queryParameters.QueryParameter;
 
 /**
  * Représente une interface web d'accès à une base de données, par l'intermédiaire de routes
@@ -25,21 +21,15 @@ import papayaDB.api.queryParameters.QueryParameter;
  */
 public class RESTQueryInterface extends AbstractChainableQueryInterface {
 	private final HttpServer listeningServer;
-	private final NetClient tcpClient;
-	private final String host;
-	private final int connectionPort;
+	private final QueryInterface tcpClient;
 	private final int listeningPort;
 	private final Router router;
 
 	public RESTQueryInterface(String host, int connectionPort, int listeningPort) {
-		NetClientOptions options = new NetClientOptions();
-		tcpClient = getVertx().createNetClient(options);
-		this.host = host;
-		this.connectionPort = connectionPort;
+		tcpClient = QueryInterface.newTcpQueryInterface(host, connectionPort);
 		this.listeningPort = listeningPort;
 
 		router = Router.router(getVertx());
-		//router.get("/request/*").handler(this::onRESTQuery);		
 		router.post("/createdb/*").handler(x -> this.onRESTQuery(x, QueryType.CREATEDB));
 		router.post("/insert/*").handler(x -> this.onRESTQuery(x, QueryType.INSERT));
 		router.delete("/deletedb/*").handler(x -> this.onRESTQuery(x, QueryType.DELETEDB));
@@ -77,26 +67,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		callback.accept(new QueryAnswer(answer));
 		*/
 		// VRAI CODE EN SUPPOSANT QU'UNE DB EXISTE DE L'AUTRE COTE DE LA CONNEXION
-		tcpClient.connect(connectionPort, host, connectHandler -> {
-			if (connectHandler.succeeded()) {
-				System.out.println("Connection established for query");
-				NetSocket socket = connectHandler.result();
-				
-				// Définir quoi faire avec la réponse
-				socket.handler(buffer -> {
-					JsonObject answer = buffer.toJsonObject();
-					System.out.println("Received query answer: "+answer);
-					callback.accept(new QueryAnswer(answer));
-				});
-				
-				// Envoyer la demande
-				socket.write(query);
-
-			} else {
-				System.out.println("Failed to connect: " + connectHandler.cause().getMessage());
-			}
-		});
-		
+		tcpClient.processQuery(query, callback);
 	}
 	
 	public void onRESTQuery(RoutingContext routingContext, QueryType type) {

@@ -14,4 +14,13 @@ public interface QueryInterface {
 	 * @param callback le {@link Consumer} qui recevra le {@link QueryAnswer} de réponse de la requête.
 	 */
 	public void processQuery(String query, Consumer<QueryAnswer> callback);
+	public default void close() {}
+	
+	public static QueryInterface newHttpQueryInterface(String host, int port) {
+		return new HttpQueryInterface(host, port);
+	}
+	
+	public static QueryInterface newTcpQueryInterface(String host, int port) {
+		return new TcpQueryInterface(host, port);
+	}
 }

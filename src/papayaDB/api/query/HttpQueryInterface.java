@@ -9,7 +9,7 @@ import io.vertx.core.http.HttpClient;
 /**
  * Cette classe représente une connexion utilisateur (un "noeud de tête") pour faire des requêtes sur un noeud papayaDB.
  */
-public class HttpQueryInterface extends AbstractChainableQueryInterface {
+class HttpQueryInterface extends AbstractChainableQueryInterface {
 	/**
 	 * L'objet employé pour le traitement des requêtes HTTP.
 	 */
@@ -32,14 +32,6 @@ public class HttpQueryInterface extends AbstractChainableQueryInterface {
 		client = getVertx().createHttpClient();
 		this.host = host;
 		this.port = port;
-	}
-	
-	/**
-	 * Constructeur simplifié d'une nouvelle connexion, le port par défaut est 80.
-	 * @param host le nom de l'hôte REST pour la connexion
-	 */
-	public HttpQueryInterface(String host) {
-		this(host, 80);
 	}
 	
 	@Override
