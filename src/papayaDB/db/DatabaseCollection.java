@@ -48,11 +48,13 @@ public class DatabaseCollection {
 	private Stream<JsonObject> processParameters(Stream<JsonObject> elements, JsonObject query) {
 		Stream<JsonObject> result = elements;
 		JsonObject parametersContainer = query.getJsonObject("parameters");
-		for(String parameter : parametersContainer.fieldNames()) {
-			JsonObject parameters = parametersContainer.getJsonObject(parameter);
-			Optional<QueryParameter> queryParameter = QueryParameter.getQueryParameterKey(QueryType.GET, parameter);
-			if(queryParameter.isPresent()) {
-				result = queryParameter.get().processQueryParameters(parameters, result);
+		if(parametersContainer != null) {
+			for(String parameter : parametersContainer.fieldNames()) {
+				JsonObject parameters = parametersContainer.getJsonObject(parameter);
+				Optional<QueryParameter> queryParameter = QueryParameter.getQueryParameterKey(QueryType.GET, parameter);
+				if(queryParameter.isPresent()) {
+					result = queryParameter.get().processQueryParameters(parameters, result);
+				}
 			}
 		}
 		return result;

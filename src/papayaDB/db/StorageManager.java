@@ -13,5 +13,6 @@ public interface StorageManager {
 	public Map<UUID, Record> loadRecords() throws IOException;
 	public Record createNewRecord(JsonObject newRecord);
 	public void deleteRecord(Record record);
+	public void updateRecord(Record record, JsonObject newObject);
 	public int getRecordsNumber();
 }
