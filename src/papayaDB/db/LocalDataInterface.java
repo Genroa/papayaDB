@@ -54,10 +54,16 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 		}
 		return true;
 	}
+	
+	private boolean checkPermission(JsonObject query) {
+		return true;
+	}
 
 	public void processQuery(String queryString, Consumer<QueryAnswer> callback) {
 		JsonObject query = new JsonObject(queryString);
-
+		
+		checkPermission(query);
+		
 		try {
 			QueryType type = QueryType.valueOf(query.getString("type"));
 

@@ -24,22 +24,17 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 	
 	private String host;
 	
-	private String user;
-	
-	private String hash;
 	
 	/**
 	 * Crée une nouvelle connexion vers une interface de requête papayaDB.
 	 * @param host le nom de l'hôte REST pour la connexion
 	 * @param port le port pour la connexion
 	 */
-	public TcpQueryInterface(String host, int port, String user, String hash) {
+	public TcpQueryInterface(String host, int port) {
 		NetClientOptions options = new NetClientOptions();
 		client = getVertx().createNetClient(options);
 		this.port = port;
 		this.host = host;
-		this.user = user;
-		this.hash = hash;
 	}
 	
 	
@@ -49,7 +44,7 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 		super.close();
 	}
 	
-	public void processQuery(String database, JsonObject queryObject, Consumer<QueryAnswer> callback) {
+	public void processQuery(String database, JsonObject queryObject, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(queryObject);
 		Objects.requireNonNull(callback);
 		
@@ -81,58 +76,51 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 	
 
 	@Override
-	public void createNewDatabase(String name, Consumer<QueryAnswer> callback) {
+	public void createNewDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(name);
-		processQuery(name, new JsonObject().put("type", QueryType.CREATEDB.name()), callback);
+		processQuery(name, new JsonObject().put("type", QueryType.CREATEDB.name()), user, hash, callback);
 	}
 
 
 	@Override
-	public void deleteDatabase(String name, Consumer<QueryAnswer> callback) {
+	public void deleteDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(name);
-		processQuery(name, new JsonObject().put("type", QueryType.DELETEDB.name()), callback);
+		processQuery(name, new JsonObject().put("type", QueryType.DELETEDB.name()), user, hash, callback);
 	}
 
 
 	@Override
-	public void updateRecord(String database, String uid, JsonObject newRecord, Consumer<QueryAnswer> callback) {
+	public void updateRecord(String database, String uid, JsonObject newRecord, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(uid);
 		Objects.requireNonNull(newRecord);
 		processQuery(database, new JsonObject().put("type", QueryType.UPDATE.name())
 									 			.put("oldRecord", uid)
-									 			.put("newRecord", newRecord), callback);
+									 			.put("newRecord", newRecord), user, hash, callback);
 	}
 	
 
 	@Override
-	public void deleteRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
-		processQuery(database, new JsonObject().put("type", QueryType.DELETE).put("parameters", parameters), callback);
+	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
+		processQuery(database, new JsonObject().put("type", QueryType.DELETE).put("parameters", parameters), user, hash, callback);
 	}
 	
 
 	@Override
-	public void insertNewRecord(String database, JsonObject record, Consumer<QueryAnswer> callback) {
+	public void insertNewRecord(String database, JsonObject record, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
 		Objects.requireNonNull(record);
-		processQuery(database, new JsonObject().put("type", QueryType.INSERT.name()).put("newRecord", record), callback);
+		processQuery(database, new JsonObject().put("type", QueryType.INSERT.name()).put("newRecord", record), user, hash, callback);
 	}
 
 
 	@Override
-	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
-		processQuery(database, new JsonObject().put("type", QueryType.GET).put("parameters", parameters), callback);
+	public void getRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
+		processQuery(database, new JsonObject().put("type", QueryType.GET).put("parameters", parameters), user, hash, callback);
 	}
 
 
 	@Override
-	public void setAuthInformations(String user, String hash) {
-		this.user = user;
-		this.hash = hash;
-	}
-
-
-	@Override
-	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {
-		processQuery(database, new JsonObject().put("type", QueryType.EXPORTALL), callback);
+	public void exportDatabase(String database, String user, String hash, Consumer<QueryAnswer> callback) {
+		processQuery(database, new JsonObject().put("type", QueryType.EXPORTALL), user, hash, callback);
 	}
 }
