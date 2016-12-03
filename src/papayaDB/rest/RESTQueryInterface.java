@@ -39,7 +39,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		
 		tcpClient = QueryInterface.newTcpQueryInterface(host, connectionPort);
 		this.listeningPort = listeningPort;
-
+		
 		router = Router.router(getVertx());
 		router.post("/createdb/*").handler(x -> this.onRESTQuery(x, QueryType.CREATEDB));
 		router.post("/insert/*").handler(x -> this.onRESTQuery(x, QueryType.INSERT));
