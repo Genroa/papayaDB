@@ -90,7 +90,7 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void exportDatabase(String database, String user, String hash, Consumer<QueryAnswer> callback) {
+	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
 		processGetQuery("/exportall/" + database ,callback);
 	}
@@ -107,19 +107,26 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
 		Objects.requireNonNull(parameters);
-		
+		StringBuilder sb = new StringBuilder("/delete/" + database);
+		for (String key: parameters.fieldNames()) {
+			// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
+			// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
+			sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
+		}
+		processDeleteQuery(sb.toString(), user, hash, callback);
 	}
 
 	@Override
 	public void insertNewRecord(String database, JsonObject record, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
 		Objects.requireNonNull(record);
+		processPostQuery("/insert/" + database, record, user, hash, callback);
 	}
 
 	@Override
-	public void getRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
+	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
-		Objects.requireNonNull(parameters);
+		Objects.requireNonNull(parameters); 
 		StringBuilder sb = new StringBuilder("/get/" + database);
 		for (String key: parameters.fieldNames()) {
 			// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
