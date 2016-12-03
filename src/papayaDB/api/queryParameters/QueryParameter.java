@@ -27,6 +27,9 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
  * Classe abstraite représentant les différents paramètres de requete
  */
 public abstract class QueryParameter {
+	
+	boolean isTerminalModifier = false;
+	
 	/**
 	 * Map des différents paramètres de requete en fonction du type de requete.
 	 */
@@ -213,6 +216,10 @@ public abstract class QueryParameter {
 		}
 //		System.out.println("getQueryParamKey = " + type.toString() + " " + key);
 		return Optional	.ofNullable((QueryParameter) getQueryParametersForType(type).get(key));
+	}
+	
+	public boolean isTerminalModifier() {
+		return isTerminalModifier;
 	}
 }
  

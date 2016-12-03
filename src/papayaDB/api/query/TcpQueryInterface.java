@@ -22,19 +22,24 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 	 */
 	private final int port;
 	
-	
 	private String host;
+	
+	private final String user;
+	
+	private final String hash;
 	
 	/**
 	 * Crée une nouvelle connexion vers une interface de requête papayaDB.
 	 * @param host le nom de l'hôte REST pour la connexion
 	 * @param port le port pour la connexion
 	 */
-	public TcpQueryInterface(String host, int port) {
+	public TcpQueryInterface(String host, int port, String user, String hash) {
 		NetClientOptions options = new NetClientOptions();
 		client = getVertx().createNetClient(options);
 		this.port = port;
 		this.host = host;
+		this.user = user;
+		this.hash = hash;
 	}
 	
 	
@@ -66,5 +71,47 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 				System.out.println("Failed to connect: " + connectHandler.cause().getMessage());
 			}
 		});
+	}
+
+
+	@Override
+	public void createNewDatabase(String name, Consumer<QueryAnswer> callback) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void deleteDatabase(String name, Consumer<QueryAnswer> callback) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void updateRecord(String uid, JsonObject newRecord, Consumer<QueryAnswer> callback) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void deleteRecords(String uid, Consumer<QueryAnswer> callback) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void insertNewRecord(String database, JsonObject record, Consumer<QueryAnswer> callback) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void getRecords(JsonObject query, Consumer<QueryAnswer> callback) {
+		// TODO Auto-generated method stub
+		
 	}
 }

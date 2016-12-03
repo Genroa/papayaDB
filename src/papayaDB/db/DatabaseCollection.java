@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
+import papayaDB.api.query.SyntaxErrorException;
 import papayaDB.api.queryParameters.QueryParameter;
 
 /**
@@ -40,10 +41,37 @@ public class DatabaseCollection {
 		this.storageFile = new FileStorageManager(name);
 	}
 	
-	private Stream<JsonObject> processParameters(Stream<JsonObject> elements, JsonObject query) {
-		Stream<JsonObject> result = elements;
+	private Stream<JsonObject> processParameters(JsonObject query) {
+		if(!query.containsKey("type")) throw new SyntaxErrorException("No query type providen");
+		String typeString = query.getString("type");
+		QueryType type;
+		try {
+			type = QueryType.valueOf(typeString);
+		}
+		catch(IllegalArgumentException e) {
+			throw new SyntaxErrorException("Query type "+typeString+" doesn't exists");
+		}
+		
 		JsonObject parametersContainer = query.getJsonObject("parameters");
 		if(parametersContainer != null) {
+			ArrayList<String> parametersNames = new ArrayList<>(parametersContainer.fieldNames());
+			parametersNames.sort((parameterName1, parameterName2) -> {
+				Optional<QueryParameter> qp1 = QueryParameter.getQueryParameterKey(type, parameterName1);
+				Optional<QueryParameter> qp2 = QueryParameter.getQueryParameterKey(type, parameterName2);
+				
+				if(!qp1.isPresent()) throw new SyntaxErrorException("Query parameter "+parameterName1+" doesn't exists or isn't correct with query type "+type.name());
+				if(!qp2.isPresent()) throw new SyntaxErrorException("Query parameter "+parameterName2+" doesn't exists or isn't correct with query type "+type.name());
+				
+				QueryParameter q1 = qp1.get();
+				QueryParameter q2 = qp2.get();
+				
+				if(!q1.isTerminalModifier()) return -1;
+				if(!q2.isTerminalModifier()) return 1;
+				
+				return 0;
+			});
+			
+			/*
 			for(String parameter : parametersContainer.fieldNames()) {
 				JsonObject parameters = parametersContainer.getJsonObject(parameter);
 				Optional<QueryParameter> queryParameter = QueryParameter.getQueryParameterKey(QueryType.GET, parameter);
@@ -51,8 +79,9 @@ public class DatabaseCollection {
 					result = queryParameter.get().processQueryParameters(parameters, result);
 				}
 			}
+			*/
 		}
-		return result;
+		return null;
 	}
 	
 	public List<JsonObject> searchRecords(JsonObject query) {
@@ -64,6 +93,7 @@ public class DatabaseCollection {
 		
 		return res.collect(Collectors.toList());
 		*/
+		Stream<JsonObject> res = processParameters(query);
 		return new ArrayList<>();
 	}
 }

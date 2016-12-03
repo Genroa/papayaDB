@@ -14,6 +14,10 @@ public class Fields extends QueryParameter {
 		QueryParameter.parameter.get(QueryType.INSERT).put("fields", new Fields());
 		QueryParameter.parameter.get(QueryType.UPDATE).put("fields", new Fields());
 	}
+	
+	public Fields() {
+		isTerminalModifier = true;
+	}
 
 	public JsonObject valueToJson(JsonObject json, String value) {
 		JsonObject params = QueryParameter.getJsonParameters(json);
