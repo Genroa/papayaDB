@@ -6,9 +6,7 @@ import java.util.function.Consumer;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava.core.Vertx;
 import papayaDB.api.queryParameters.QueryParameter;
 
 /**
