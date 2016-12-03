@@ -19,12 +19,9 @@ public class Fields extends QueryParameter {
 		JsonObject params = QueryParameter.getJsonParameters(json);
 		JsonObject fields = new JsonObject();
 		JsonArray array = new JsonArray();
-		//Indique quand appeller le code pour filtrer sur les champs si params est vide, on l'appelle au début sinon à la fin.
-		fields.put("call", params.isEmpty()?"begin":"end");
-		if(value.charAt(0) == '[' && value.charAt(value.length()-1) == ']') {
-			value = value.substring(1, value.length() - 1);
-			String[] values = value.split(",");
-			for	(String s: values) {
+		if(value.charAt(0) == '[' && value.charAt(value.length()-1) == ']') { //si il à plus d'un champ l'utilisateur doit mettre des crochets 
+			String[] values = value.substring(1, value.length() - 1).split(","); //On retire les crochets et on split aux virgules
+			for	(String s: values) { // on ajoute chaque élément au tableau json
 				array.add(s);
 			}
 		} else {
