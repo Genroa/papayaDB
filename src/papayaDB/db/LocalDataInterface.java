@@ -55,14 +55,19 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 		return true;
 	}
 	
-	private boolean checkPermission(JsonObject query) {
+	private boolean checkPermission(String user, String hash) {
 		return true;
 	}
 
 	public void processQuery(String queryString, Consumer<QueryAnswer> callback) {
 		JsonObject query = new JsonObject(queryString);
 		
-		checkPermission(query);
+		if(!checkFieldsPresence(query, callback, "user", "hash")) {
+			return;
+		}
+		
+		String user = query.getString("user");
+		String hash = query.getString("hash");
 		
 		try {
 			QueryType type = QueryType.valueOf(query.getString("type"));
@@ -70,43 +75,43 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			if(type == QueryType.CREATEDB) {
 				if(checkFieldsPresence(query, callback, "db")) {
 					String dbName = query.getString("db");
-					createNewDatabase(dbName, callback);
+					createNewDatabase(dbName, user, hash, callback);
 				}
 			}
 			else if(type == QueryType.DELETEDB) {
 				if(checkFieldsPresence(query, callback, "db")) {
 					String dbName = query.getString("db");
-					deleteDatabase(dbName, callback);
+					deleteDatabase(dbName, user, hash, callback);
 				}
 			}
 			else if(type == QueryType.EXPORTALL) {
 				if(checkFieldsPresence(query, callback, "db")) {
 					String dbName = query.getString("db");
-					exportDatabase(dbName, callback);
+					exportDatabase(dbName, user, hash, callback);
 				}
 			}
 			else if(type == QueryType.GET) {
 				if(checkFieldsPresence(query, callback, "db")) {
 					String dbName = query.getString("db");
-					getRecords(dbName, query.getJsonObject("parameters"), callback);
+					getRecords(dbName, query.getJsonObject("parameters"), user, hash, callback);
 				}
 			}
 			else if(type == QueryType.DELETE) {
 				if(checkFieldsPresence(query, callback, "db")) {
 					String dbName = query.getString("db");
-					deleteRecords(dbName, query.getJsonObject("parameters"), callback);
+					deleteRecords(dbName, query.getJsonObject("parameters"), user, hash, callback);
 				}
 			}
 			else if(type == QueryType.INSERT) {
 				if(checkFieldsPresence(query, callback, "db", "newRecord")) {
 					String dbName = query.getString("db");
-					insertNewRecord(dbName, query.getJsonObject("newRecord"), callback);
+					insertNewRecord(dbName, query.getJsonObject("newRecord"), user, hash, callback);
 				}
 			}
 			else if(type == QueryType.UPDATE) {
 				if(checkFieldsPresence(query, callback, "db", "uid", "newRecord")) {
 					String dbName = query.getString("db");
-					updateRecord(dbName, query.getString("uid"), query.getJsonObject("newRecord"), callback);
+					updateRecord(dbName, query.getString("uid"), query.getJsonObject("newRecord"), user, hash, callback);
 				}
 			}
 		}
@@ -135,13 +140,11 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 		});
 	}
 
+	
 	@Override
-	public void setAuthInformations(String user, String hash) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void createNewDatabase(String name, Consumer<QueryAnswer> callback) {
+	public void createNewDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
+		if(!checkPermission(user, hash)) return;
+		
 		if(collections.containsKey(name)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+name+" already exists"));
 		}
@@ -157,7 +160,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void deleteDatabase(String name, Consumer<QueryAnswer> callback) {
+	public void deleteDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
+		if(!checkPermission(user, hash)) return;
+		
 		if(!collections.containsKey(name)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+name+" doesn't exists"));
 		}
@@ -174,7 +179,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {
+	public void exportDatabase(String database, String user, String hash, Consumer<QueryAnswer> callback) {
+		if(!checkPermission(user, hash)) return;
+		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
@@ -186,7 +193,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void updateRecord(String database, String uid, JsonObject newRecord, Consumer<QueryAnswer> callback) {
+	public void updateRecord(String database, String uid, JsonObject newRecord, String user, String hash, Consumer<QueryAnswer> callback) {
+		if(!checkPermission(user, hash)) return;
+		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
@@ -198,7 +207,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void deleteRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
+	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
+		if(!checkPermission(user, hash)) return;
+		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
@@ -211,7 +222,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void insertNewRecord(String database, JsonObject record, Consumer<QueryAnswer> callback) {
+	public void insertNewRecord(String database, JsonObject record, String user, String hash, Consumer<QueryAnswer> callback) {
+		if(!checkPermission(user, hash)) return;
+		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
@@ -223,7 +236,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
+	public void getRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
+		if(!checkPermission(user, hash)) return;
+		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
