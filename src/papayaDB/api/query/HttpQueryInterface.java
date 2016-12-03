@@ -57,6 +57,12 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
+	public void setAuthInformations(String user, String hash) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
 	public void createNewDatabase(String name, Consumer<QueryAnswer> callback) {
 		// TODO Auto-generated method stub
 		
@@ -69,13 +75,19 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void updateRecord(String uid, JsonObject newRecord, Consumer<QueryAnswer> callback) {
+	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void deleteRecords(String uid, Consumer<QueryAnswer> callback) {
+	public void updateRecord(String database, String uid, JsonObject newRecord, Consumer<QueryAnswer> callback) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void deleteRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -87,7 +99,7 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void getRecords(JsonObject query, Consumer<QueryAnswer> callback) {
+	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
 		// TODO Auto-generated method stub
 		
 	}

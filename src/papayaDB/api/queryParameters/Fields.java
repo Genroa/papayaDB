@@ -43,7 +43,6 @@ public class Fields extends QueryParameter {
 		return elements.filter(json -> {
 			for(Object field : array) {
 				if(! (field instanceof String)) {
-					// TODO l'exception ne sert à rien ici (lambda), revoir ce code
 					throw new SyntaxErrorException("Field "+field+" must be a field name, represented by a string");
 				}
 				if(!json.containsKey((String) field)) return false;

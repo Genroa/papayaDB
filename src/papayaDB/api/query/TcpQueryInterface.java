@@ -24,9 +24,9 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 	
 	private String host;
 	
-	private final String user;
+	private String user;
 	
-	private final String hash;
+	private String hash;
 	
 	/**
 	 * Crée une nouvelle connexion vers une interface de requête papayaDB.
@@ -49,9 +49,15 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 		super.close();
 	}
 	
-	@Override
-	public void processQuery(String query, Consumer<QueryAnswer> callback) {
+	public void processQuery(String database, JsonObject queryObject, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(queryObject);
 		Objects.requireNonNull(callback);
+		
+		queryObject.put("db", database)
+				   .put("user", user)
+				   .put("password", hash);
+		
+		
 		client.connect(port, host, connectHandler -> {
 			if (connectHandler.succeeded()) {
 				System.out.println("Connection established for query");
@@ -65,53 +71,68 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 				});
 				
 				// Envoyer la demande
-				socket.write(query);
+				socket.write(queryObject.encode());
 
 			} else {
-				System.out.println("Failed to connect: " + connectHandler.cause().getMessage());
+				callback.accept(new QueryAnswer(new JsonObject().put("status", QueryAnswerStatus.HOST_UNREACHABLE.name()).put("message", "Query couldn't reach next host")));
 			}
 		});
 	}
-
+	
 
 	@Override
 	public void createNewDatabase(String name, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
+		Objects.requireNonNull(name);
+		processQuery(name, new JsonObject().put("type", QueryType.CREATEDB.name()), callback);
 	}
 
 
 	@Override
 	public void deleteDatabase(String name, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
+		Objects.requireNonNull(name);
+		processQuery(name, new JsonObject().put("type", QueryType.DELETEDB.name()), callback);
 	}
 
 
 	@Override
-	public void updateRecord(String uid, JsonObject newRecord, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
+	public void updateRecord(String database, String uid, JsonObject newRecord, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(uid);
+		Objects.requireNonNull(newRecord);
+		processQuery(database, new JsonObject().put("type", QueryType.UPDATE.name())
+									 			.put("oldRecord", uid)
+									 			.put("newRecord", newRecord), callback);
 	}
-
+	
 
 	@Override
-	public void deleteRecords(String uid, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
+	public void deleteRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
+		processQuery(database, new JsonObject().put("type", QueryType.DELETE).put("parameters", parameters), callback);
 	}
-
+	
 
 	@Override
 	public void insertNewRecord(String database, JsonObject record, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
+		Objects.requireNonNull(database);
+		Objects.requireNonNull(record);
+		processQuery(database, new JsonObject().put("type", QueryType.INSERT.name()).put("newRecord", record), callback);
 	}
 
 
 	@Override
-	public void getRecords(JsonObject query, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
+	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
+		processQuery(database, new JsonObject().put("type", QueryType.GET).put("parameters", parameters), callback);
+	}
+
+
+	@Override
+	public void setAuthInformations(String user, String hash) {
+		this.user = user;
+		this.hash = hash;
+	}
+
+
+	@Override
+	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {
+		processQuery(database, new JsonObject().put("type", QueryType.EXPORTALL), callback);
 	}
 }

@@ -10,12 +10,17 @@ import io.vertx.core.json.JsonObject;
  *
  */
 public interface QueryInterface {
+	
+	public void setAuthInformations(String user, String hash);
+	
 	public void createNewDatabase(String name, Consumer<QueryAnswer> callback);
 	public void deleteDatabase(String name, Consumer<QueryAnswer> callback);
-	public void updateRecord(String uid, JsonObject newRecord, Consumer<QueryAnswer> callback);
-	public void deleteRecords(String uid, Consumer<QueryAnswer> callback);
+	public void exportDatabase(String database, Consumer<QueryAnswer> callback);
+	
+	public void updateRecord(String database, String uid, JsonObject newRecord, Consumer<QueryAnswer> callback);
+	public void deleteRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback);
 	public void insertNewRecord(String database, JsonObject record, Consumer<QueryAnswer> callback);
-	public void getRecords(JsonObject query, Consumer<QueryAnswer> callback);
+	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback);
 	
 	public default void close() {}
 	
