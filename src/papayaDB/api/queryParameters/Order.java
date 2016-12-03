@@ -18,5 +18,11 @@ public class Order extends QueryParameter {
 		json.put("parameters", params.put("order", new JsonObject().put("field", values[0]).put("way", values[1])));
 		return json;
 	}
+	
+	public String valueToString(String key, JsonObject value) {
+		StringBuilder sb = new StringBuilder(key).append("/[");
+		sb.append(value.getString("field")).append(";").append(value.getString("way"));
+		return sb.append("]").toString();
+	}
 }
  

@@ -43,6 +43,7 @@ public class Fields extends QueryParameter {
 		return elements.filter(json -> {
 			for(Object field : array) {
 				if(! (field instanceof String)) {
+					// TODO l'exception ne sert à rien ici (lambda), revoir ce code
 					throw new SyntaxErrorException("Field "+field+" must be a field name, represented by a string");
 				}
 				if(!json.containsKey((String) field)) return false;
@@ -55,6 +56,16 @@ public class Fields extends QueryParameter {
 			}
 			return newJson;
 		});
+	}
+	
+	public String valueToString(String key, JsonObject value) {
+		StringBuilder sb = new StringBuilder(key + "/" );
+		if(value.getJsonObject("value").toString().startsWith("[")) {
+			sb.append(value.getJsonArray("value").toString());
+		} else {
+			sb.append(value.getValue("value").toString()).append(";");
+		}
+		return sb.toString();
 	}
 }
  

@@ -28,5 +28,17 @@ public class Bounds extends QueryParameter {
 		json.put("parameters", params.put("bounds", new JsonObject().put("value", bounds)));
 		return json;
 	}
+	
+	public String valueToString(String key, JsonObject value) {
+		StringBuilder sb = new StringBuilder(key).append("/[");
+		value.getJsonArray("value");
+		for (Object ja: value.getJsonArray("value")) { //On itère sur les éléments du json array (retourne un Object)
+			JsonObject jo = ((JsonObject)ja);			//On transforme l'Objet en JsonObject
+			sb	.append(jo.getString("field")).append(";")
+				.append(jo.getInteger("min").toString()).append(";")
+				.append(jo.getInteger("max").toString()).append(";");
+		}
+		return sb.deleteCharAt(sb.length() - 1).append("]").toString();
+	}
 }
  

@@ -170,6 +170,15 @@ public abstract class QueryParameter {
 	public JsonObject valueToJson(JsonObject json, String value) throws SyntaxErrorException {
 		throw new NotImplementedException();
 	}
+	/**
+	 * Méthode qui permet de transformer une clé d'un document json en morceau d'url.
+	 * @param key
+	 * @param value
+	 * @return
+	 */
+	public String valueToString(String key, JsonObject value) {
+		throw new NotImplementedException();
+	}
 	
 	/**
 	 * @param parameters

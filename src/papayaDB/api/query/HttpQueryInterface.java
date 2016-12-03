@@ -5,7 +5,11 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.rxjava.core.Vertx;
+import papayaDB.api.queryParameters.QueryParameter;
 
 /**
  * Cette classe représente une connexion utilisateur (un "noeud de tête") pour faire des requêtes sur un noeud papayaDB.
@@ -24,21 +28,15 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	 */
 	private final String host;
 	
-	private String user;
-	
-	private String hash;
-	
 	/**
 	 * Crée une nouvelle connexion vers une interface de requête papayaDB.
 	 * @param host le nom de l'hôte REST pour la connexion
 	 * @param port le port pour la connexion
 	 */
-	public HttpQueryInterface(String host, int port, String user, String hash) {
-		client = getVertx().createHttpClient();
+	public HttpQueryInterface(String host, int port) {
+		client = getVertx().createHttpClient(new HttpClientOptions().setSsl(true).setTrustAll(true));
 		this.host = host;
 		this.port = port;
-		this.user = user;
-		this.hash = hash;
 	}
 	
 	@Override
@@ -47,59 +45,87 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		super.close();
 	}
 	
-	public void processQuery(String query, Consumer<QueryAnswer> callback) {
+	public void processGetQuery(String query, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
-		client.getNow(port, host, "/"+query, response -> {
-			//TODO check response.statusCode() before calling bodyHandler
-			response.bodyHandler(bodyBuffer -> { callback.accept(new QueryAnswer(bodyBuffer.toJsonObject())); });
+		client.getNow(8080, "localhost", query, resp -> {
+			System.out.println("Got response " + resp.statusCode());
+			resp.bodyHandler(body -> {
+				callback.accept(new QueryAnswer(body.toJsonObject()));
+			});
+		});
+	}
+	
+	public void processPostQuery(String query, JsonObject body, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(callback);
+		query = query + "/auth/[" + user + ";" + hash + "]";
+		client.post(8080, "localhost", query, resp -> {
+			System.out.println("Got response " + resp.statusCode());
+			resp.bodyHandler(bodyResponse -> {
+				callback.accept(new QueryAnswer(bodyResponse.toJsonObject()));
+			});
+		}).end(body.toString());
+	}
+	
+	public void processDeleteQuery(String query, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(callback);
+		query = query + "/auth/[" + user + ";" + hash + "]";
+		client.delete(8080, "localhost", query, resp -> {
+			System.out.println("Got response " + resp.statusCode());
+			resp.bodyHandler(bodyResponse -> {
+				callback.accept(new QueryAnswer(bodyResponse.toJsonObject()));
+			});
 		});
 	}
 
 	@Override
-	public void setAuthInformations(String user, String hash) {
-		this.user = user;
-		this.hash = hash;
+	public void createNewDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(name);
+		processPostQuery("/createdb/" + name, null, user, hash, callback);
 	}
 
 	@Override
-	public void createNewDatabase(String name, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
+	public void deleteDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(name);
+		processDeleteQuery("/deletedb/" + name, user, hash, callback);
+	}
+
+	@Override
+	public void exportDatabase(String database, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(database);
+		processGetQuery("/exportall/" + database ,callback);
+	}
+
+	@Override
+	public void updateRecord(String database, String uid, JsonObject newRecord, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(database);
+		Objects.requireNonNull(uid);
+		Objects.requireNonNull(newRecord);
+		processPostQuery("/update/" + database, new JsonObject().put("uid", uid).put("record", newRecord), user, hash, callback);
+	}
+
+	@Override
+	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(database);
+		Objects.requireNonNull(parameters);
 		
 	}
 
 	@Override
-	public void deleteDatabase(String name, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
+	public void insertNewRecord(String database, JsonObject record, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(database);
+		Objects.requireNonNull(record);
 	}
 
 	@Override
-	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void updateRecord(String database, String uid, JsonObject newRecord, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void deleteRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void insertNewRecord(String database, JsonObject record, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
-		// TODO Auto-generated method stub
-		
+	public void getRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(database);
+		Objects.requireNonNull(parameters);
+		StringBuilder sb = new StringBuilder("/get/" + database);
+		for (String key: parameters.fieldNames()) {
+			// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
+			// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
+			sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
+		}
+		processGetQuery(sb.toString(), callback);
 	}
 }

@@ -34,5 +34,11 @@ public class Limit extends QueryParameter {
 		long maxSize = parameters.getLong("value");
 		return elements.limit(maxSize);
 	}
+	
+	public String valueToString(String key, JsonObject value) {
+		StringBuilder sb = new StringBuilder(key + "/");
+		sb.append(value.getInteger("value"));
+		return sb.toString();
+	}
 }
  
