@@ -1,6 +1,7 @@
 package papayaDB.db;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,25 +25,19 @@ public class DatabaseCollection {
 	private final String name;
 	
 	/**
-	 * La Map contenant les éléments de la DatabaseCollection
-	 */
-	private final Map<UUID, Record> elements;
-	
-	/**
 	 * La Map contenant les TreeMap représentant les index d'optimisation sur la Map des éléments
 	 */
-	private final Map<String, TreeMap<?, UUID>> indexes = new HashMap<>();
+	private final Map<String, TreeMap<?, Integer>> indexes = new HashMap<>();
 	
 	/**
 	 * Le StorageManager stockant physiquement la collection
 	 */
-	private final StorageManager storageFile;
+	private final FileStorageManager storageFile;
 	
 	
 	public DatabaseCollection(String name) throws IOException {
 		this.name = name;
 		this.storageFile = new FileStorageManager(name);
-		this.elements = storageFile.loadRecords();
 	}
 	
 	private Stream<JsonObject> processParameters(Stream<JsonObject> elements, JsonObject query) {
@@ -62,10 +57,13 @@ public class DatabaseCollection {
 	
 	public List<JsonObject> searchRecords(JsonObject query) {
 		System.out.println("Searching records...");
+		/*
 		Stream<JsonObject> res = elements.values().stream().map(record -> record.getRecord());
 		
 		res = processParameters(res, query);
 		
 		return res.collect(Collectors.toList());
+		*/
+		return new ArrayList<>();
 	}
 }

@@ -25,7 +25,7 @@ import io.vertx.core.json.JsonObject;
 /**
  * Implémentation d'un StorageManager mappant le contenu de la base de données qu'il représente dans un fichier
  */
-public class FileStorageManager implements StorageManager {
+public class FileStorageManager {
 	private final static int EMPTY_CHUNK_SECTION = -1;
 	private final static int CHUNK_SIZE = 64;
 	private final RandomAccessFile rafile;
@@ -33,7 +33,7 @@ public class FileStorageManager implements StorageManager {
 	private int recordsNumber;
 	private MappedByteBuffer fileBuffer;
 	private HashMap<Integer, ArrayList<Integer>> holesMap = new HashMap<>();
-	
+	private HashMap<Integer, Integer> addressMapping = new HashMap<>();
 	
 	public FileStorageManager(String fileName) throws IOException {
 		Path pathToFile = Paths.get(fileName+".coll");
@@ -60,15 +60,15 @@ public class FileStorageManager implements StorageManager {
 			recordsNumber = fileBuffer.getInt();
 		}
 		fileBuffer.rewind();
+		
+		loadRecords();
 	}
-
-	@Override
-	public Map<UUID, Record> loadRecords() throws IOException {
+	
+	private void loadRecords() throws IOException {
 		long fileSize = rafile.length();
-		HashMap<UUID, Record> elements = new HashMap<UUID, Record>();
 		
 		if(fileSize == 0) {
-			return elements;
+			return;
 		}
 		
 		fileBuffer.rewind();
@@ -89,24 +89,22 @@ public class FileStorageManager implements StorageManager {
 				}
 				int objectPosition = fileBuffer.position()-Integer.BYTES;
 				System.out.println("Loading object, chunk size "+computeChunkSize(objectSize)+" bytes at pos "+objectPosition);
-				Record record = new FileRecord(objectSize, objectPosition, this);
-				elements.put(record.getUUID(), record);
+				addressMapping.put(objectPosition, objectSize);
+				
 				fileBuffer.position(objectPosition+computeChunkSize(objectSize));
 				i++;
 			}
 		} catch(BufferUnderflowException e) {
 			System.out.println("Corrupted database collection??");
 		}
-		
-		return elements;
 	}
 	
 	/**
-	 * Permet d'enregistrer une section de chunks comme étant vide et réinscriptible. ATTENTION, ne modifie pas physiquement le fichier, c'est à faire à la main!
+	 * Permet d'enregistrer une section de chunks comme étant vide et réinscriptible. L'adressMapping est mis à jour durant l'appel. ATTENTION, ne modifie pas physiquement le fichier, c'est à faire à la main!
 	 * @param positionInFile la position en bytes dans le fichier
 	 * @param chunkSize le nombre de chunks vides à partir de cette position
 	 */
-	private int[] registerChunkSectionAsHole(Integer positionInFile, Integer chunkSize) {
+	private int[] registerChunkSectionAsHole(Integer positionInFile, Integer chunkSize) {		
 		int holePosition = positionInFile;
 		
 		// Essaie de trouver si la section suivante est le début d'un trou ou pas
@@ -146,22 +144,36 @@ public class FileStorageManager implements StorageManager {
 		ArrayList<Integer> emptyChunksOfThisSize = holesMap.getOrDefault(chunkSize, new ArrayList<>());
 		emptyChunksOfThisSize.add(holePosition);
 		holesMap.put(chunkSize, emptyChunksOfThisSize);
+		addressMapping.remove(positionInFile);
 		return new int[]{holePosition, chunkSize};
 	}
-
-	@Override
-	public Record createNewRecord(JsonObject newObject) {
-		FileRecord newRecord = null;
-		Buffer jsonObjectAsBuffer = buildBufferForNewRecord(newObject);
+	
+	public JsonObject getRecordAtAddress(int address) {
+		int realSize = addressMapping.getOrDefault(address, -1);
+		if(realSize == -1) return null;
 		
-		newRecord = new FileRecord(jsonObjectAsBuffer.length(), 0, this); // fake positionInFile
-		newRecord = insertRecord(newRecord, jsonObjectAsBuffer);
+		byte[] byteArr = ByteBuffer.allocate(realSize).array();
+		fileBuffer.position(address);
+		
+		// jump written size
+		fileBuffer.getInt();
+		fileBuffer.get(byteArr, 0, realSize);
+		Buffer b = Buffer.buffer(byteArr);
+		return b.toJsonObject();
+	}
+	
+	public int createNewRecord(JsonObject newObject) {
+		Buffer jsonObjectAsBuffer = buildBufferForNewRecord(newObject);
+		int address = -1;
+		
+		address = insertRecord(jsonObjectAsBuffer);
 		
 		// Copie bien passée
-		if(newRecord != null) {
+		if(address != -1) {
 			updateRecordsNumber(recordsNumber+1);
+			addressMapping.put(address, jsonObjectAsBuffer.length());
 		}
-		return newRecord;
+		return address;
 	}
 	
 	private Buffer buildBufferForNewRecord(JsonObject newObject) {
@@ -171,33 +183,18 @@ public class FileStorageManager implements StorageManager {
 		return b;
 	}
 	
-	private FileRecord insertRecord(FileRecord newRecord, Buffer jsonObjectAsBuffer) {
-		int realSize = newRecord.realSize;
+	private int insertRecord(Buffer jsonObjectAsBuffer) {
+		int realSize = jsonObjectAsBuffer.length();
 		int neededSize = computeChunkSize(realSize+Integer.BYTES);
 		try {
 			int position = findSuitablePositionToWrite(neededSize);
 			fileBuffer.position(position);
 			fileBuffer.putInt(realSize);
-			
-			// Si un jsonObject a été fourni : nouvelle écriture
-			if(newRecord.positionInFile == 0 && jsonObjectAsBuffer != null) {
-				fileBuffer.put(jsonObjectAsBuffer.getBytes());
-			}
-			// Sinon, on utilise l'ancienne info pour copier coller
-			else {
-				int oldPos = newRecord.positionInFile;
-				byte[] buf = new byte[newRecord.realSize];
-				fileBuffer.position(oldPos);
-				fileBuffer.get(buf);
-				fileBuffer.position(position);
-				fileBuffer.getInt(); // skip size info
-				fileBuffer.put(buf);
-			}
-			newRecord.positionInFile = position;
+			fileBuffer.put(jsonObjectAsBuffer.getBytes());
+			return position;
 		} catch(IOException e) {
-			return null;
+			return -1;
 		}
-		return newRecord;
 	}
 	
 	private void updateRecordsNumber(int newNumber) {
@@ -208,21 +205,22 @@ public class FileStorageManager implements StorageManager {
 		fileBuffer.position(oldPos);
 	}
 	
-	private int computeChunkSize(int recordSize) {
+	public static int computeChunkSize(int recordSize) {
 		return (int) Math.ceil((double) (recordSize)/ (double) CHUNK_SIZE)*CHUNK_SIZE;
 	}
-
-	@Override
-	public void deleteRecord(Record record) {
-		if(!(record instanceof FileRecord) || record.getStorageManager() != this) {
-			throw new IllegalArgumentException("Record isn't compatible with this StorageManager or hasn't been produced by it");
+	
+	public void deleteRecordAtAddress(int address) {
+		int realSize = addressMapping.getOrDefault(address, -1);
+		if(realSize == -1) return;
+		
+		int chunkSize = computeChunkSize(realSize);
+		
+		fileBuffer.position(address);
+		for(int i = 0; i < chunkSize; i++) {
+			fileBuffer.put((byte)0);
 		}
 		
-		FileRecord fileRecord = (FileRecord) record;
-		
-		int chunkSize = fileRecord.getChunkSize();
-		int position = fileRecord.getPositionInFile();
-		int[] infos = registerChunkSectionAsHole(position, chunkSize/CHUNK_SIZE);
+		int[] infos = registerChunkSectionAsHole(address, chunkSize/CHUNK_SIZE);
 		
 		MappedByteBuffer buffer;
 		try {
@@ -251,7 +249,6 @@ public class FileStorageManager implements StorageManager {
 		}
 	}
 	
-	@Override
 	public int getRecordsNumber() {
 		return recordsNumber;
 	}
@@ -319,45 +316,45 @@ public class FileStorageManager implements StorageManager {
 		return insertionPosition;
 	}
 	
-	public void updateRecord(Record record, JsonObject newObject)
+	public int updateRecord(int oldAddress, JsonObject newObject)
 	{
-		if(!(record instanceof FileRecord) || record.getStorageManager() != this) {
-			throw new IllegalArgumentException("Record isn't compatible with this StorageManager or hasn't been produced by it");
+		int oldSize = addressMapping.getOrDefault(oldAddress, -1);
+		if(oldSize == -1) {
+			return -1;
 		}
-		
-		FileRecord fileRecord = (FileRecord) record;
 		byte[] bytes = newObject.toString().getBytes();
 		
-		int oldSizeInChunks = fileRecord.getChunkSize()/CHUNK_SIZE;
+		int oldSizeInChunks = computeChunkSize(oldSize)/CHUNK_SIZE;
 		int newSizeInChunks = computeChunkSize(bytes.length+Integer.BYTES)/CHUNK_SIZE;
 		
 		// Si la taille en chunks est la même il suffit de réécrire par-dessus
 		System.out.println("OLD SC "+oldSizeInChunks+" NEW SC "+newSizeInChunks);
 		if(oldSizeInChunks == newSizeInChunks) {
-			fileBuffer.position(fileRecord.positionInFile);
+			fileBuffer.position(oldAddress);
 			fileBuffer.putInt(bytes.length);
 			fileBuffer.put(bytes);
-			fileRecord.realSize = bytes.length;
+			addressMapping.put(oldAddress, bytes.length);
+			return oldAddress;
 		}
 		else if(oldSizeInChunks > newSizeInChunks) {
 			int chunkSizeDiff = oldSizeInChunks - newSizeInChunks;
-			fileBuffer.position(fileRecord.positionInFile);
+			fileBuffer.position(oldAddress);
 			fileBuffer.putInt(bytes.length);
 			fileBuffer.put(bytes);
-			fileRecord.realSize = bytes.length;
+			addressMapping.put(oldAddress, bytes.length);
 			
 			//Puis inscrire le nouveau trou
-			int holePos = fileRecord.positionInFile + chunkSizeDiff*CHUNK_SIZE;
+			int holePos = oldAddress + chunkSizeDiff*CHUNK_SIZE;
 			fileBuffer.position(holePos);
 			fileBuffer.putInt(EMPTY_CHUNK_SECTION);
 			fileBuffer.putInt(chunkSizeDiff);
 			registerChunkSectionAsHole(holePos, chunkSizeDiff);
+			return oldAddress;
 		}
 		// oldSizeInChunks < newSizeInChunks : pas la place
 		else {
-			fileBuffer.position(fileRecord.positionInFile);
+			fileBuffer.position(oldAddress);
 			byte[] oldRecordInBytes = new byte[bytes.length];
-			int oldPos = fileRecord.positionInFile;
 			fileBuffer.get(oldRecordInBytes, 0, bytes.length);
 			int newPos;
 			try {
@@ -365,121 +362,87 @@ public class FileStorageManager implements StorageManager {
 				newPos = findSuitablePositionToWrite(newSizeInChunks*CHUNK_SIZE);
 				lookAtHoles();
 			} catch (IOException e) {
-				// Pas réussi à modifier (IOException sur finSuitableSize) : on réinscrit l'ancien au même endroit
-				fileBuffer.position(oldPos);
+				// Pas réussi à modifier (IOException sur findSuitableSize) : on réinscrit l'ancien au même endroit
+				fileBuffer.position(oldAddress);
 				fileBuffer.putInt(oldRecordInBytes.length);
 				fileBuffer.put(oldRecordInBytes);
-				return;
+				return oldAddress;
 			}
 			System.out.println("New position found for update is "+newPos);
 			// Ecriture au nouvel endroit
 			fileBuffer.position(newPos);
 			fileBuffer.putInt(bytes.length);
 			fileBuffer.put(bytes);
-			fileRecord.positionInFile = newPos;
-			fileRecord.realSize = bytes.length;
 			
 			// Suppression de l'ancien exemplaire
-			fileBuffer.position(oldPos);
+			fileBuffer.position(oldAddress);
 			fileBuffer.putInt(EMPTY_CHUNK_SECTION);
 			fileBuffer.putInt(oldSizeInChunks);
-			registerChunkSectionAsHole(oldPos, oldSizeInChunks);
-		}
-	}
-	
-	
-	/**
-	 * Classe implémentant un Record par son stockage physique dans un FileChannel.
-	 */
-	class FileRecord implements Record {
-		private int realSize;
-		private FileStorageManager storageManager;
-		private int positionInFile;
-		
-		public FileRecord(int realSize, int positionInFile, FileStorageManager storageManager) {
-			this.realSize = realSize;
-			this.storageManager = storageManager;
-			this.positionInFile = positionInFile;
-		}
-
-		/**
-		 * Retourne une copie sous forme de JsonObject du buffer mappant la mémoire dessous.
-		 */
-		@Override
-		public JsonObject getRecord() {
-			// On retourne un objet JSON créé à partir d'un Buffer vertx, créé à partir de la section consommée du MappedByteBuffer (qui lui représente le total de chunks réservés pour l'objet)
-			
-			byte[] byteArr = ByteBuffer.allocate(realSize).array();
-			MappedByteBuffer fileBuffer = storageManager.fileBuffer;
-			fileBuffer.position(positionInFile);
-			
-			// jump written size
-			fileBuffer.getInt();
-			fileBuffer.get(byteArr, 0, realSize);
-			Buffer b = Buffer.buffer(byteArr);
-			return b.toJsonObject();
-		}
-		
-		@Override
-		public void deleteRecord() {
-			storageManager.deleteRecord(this);
-		}
-
-		@Override
-		public void updateRecord(JsonObject newObject) {
-			storageManager.updateRecord(this, newObject);
-		}
-		
-		/**
-		 * Donne la taille en bytes de la section de chunks allouée pour l'entrée
-		 * @return la taille en byte de la section de chunks alloués
-		 */
-		private int getChunkSize() {
-			return computeChunkSize(realSize);
-		}
-		
-		private int getRealSize() {
-			return realSize;
-		}
-		
-		private int getPositionInFile() {
-			return positionInFile;
-		}
-
-		@Override
-		public StorageManager getStorageManager() {
-			return storageManager;
-		}
-		
-		@Override
-		public String toString() {
-			return getRecord().toString();
-		}
-
-		@Override
-		public UUID getUUID() {
-			return UUID.fromString(getRecord().getString("_uid"));
+			registerChunkSectionAsHole(oldAddress, oldSizeInChunks);
+			addressMapping.put(newPos, bytes.length);
+			return newPos;
 		}
 	}
 	
 	
 	public static void main(String[] args) throws IOException {
 		FileStorageManager sm = new FileStorageManager("testDb");
-		sm.loadRecords();
+		System.out.println("BEG");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMapping);
 		
-		Record r = sm.createNewRecord(new JsonObject().put("a", "t"));
-		Record r2 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		Record r3 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		Record r4 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		Record r5 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		Record r6 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		r4.deleteRecord();
-		r2.deleteRecord();
-		r3.deleteRecord();
-		Record r7 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		r5.updateRecord(r5.getRecord().put("newKey", "newValue"));
-//		Record r8 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		for(Integer address : sm.addressMapping.keySet()) {
+			System.out.println(sm.getRecordAtAddress(address));
+		}
 		
-		System.out.println(r5);
+		int r = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 1");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMapping);
+		
+		int r2 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 2");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMapping);
+		
+		int r3 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 3");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMapping);
+		
+		int r4 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 4");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMapping);
+		
+		int r5 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 5");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMapping);
+
+		sm.deleteRecordAtAddress(r4);
+		System.out.println("DELETE 4");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMapping);
+//		
+//		r2.deleteRecord();
+//		System.out.println("DELETE 2");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMapping);
+//		
+//		r3.deleteRecord();
+//		System.out.println("DELETE 3");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMapping);
+//		
+//		Record r7 = sm.createNewRecord(new JsonObject().put("a", "t"));
+//		System.out.println("INSERT 7");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMapping);
+//		
+//		r5.updateRecord(r5.getRecord().put("newKey", "newValue"));
+//		System.out.println("UPDATE 5");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMapping);
 	}
 }
