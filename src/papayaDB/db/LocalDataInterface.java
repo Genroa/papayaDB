@@ -62,24 +62,20 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	public void processQuery(String queryString, Consumer<QueryAnswer> callback) {
 		JsonObject query = new JsonObject(queryString);
 		
-		if(!checkFieldsPresence(query, callback, "user", "hash")) {
-			return;
-		}
-		
-		String user = query.getString("user");
-		String hash = query.getString("hash");
+		String user = (String) query.getValue("user", null);
+		String hash = (String) query.getValue("hash", null);
 		
 		try {
 			QueryType type = QueryType.valueOf(query.getString("type"));
 
 			if(type == QueryType.CREATEDB) {
-				if(checkFieldsPresence(query, callback, "db")) {
+				if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
 					String dbName = query.getString("db");
 					createNewDatabase(dbName, user, hash, callback);
 				}
 			}
 			else if(type == QueryType.DELETEDB) {
-				if(checkFieldsPresence(query, callback, "db")) {
+				if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
 					String dbName = query.getString("db");
 					deleteDatabase(dbName, user, hash, callback);
 				}
@@ -87,29 +83,29 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			else if(type == QueryType.EXPORTALL) {
 				if(checkFieldsPresence(query, callback, "db")) {
 					String dbName = query.getString("db");
-					exportDatabase(dbName, user, hash, callback);
+					exportDatabase(dbName, callback);
 				}
 			}
 			else if(type == QueryType.GET) {
 				if(checkFieldsPresence(query, callback, "db")) {
 					String dbName = query.getString("db");
-					getRecords(dbName, query.getJsonObject("parameters"), user, hash, callback);
+					getRecords(dbName, query.getJsonObject("parameters"), callback);
 				}
 			}
 			else if(type == QueryType.DELETE) {
-				if(checkFieldsPresence(query, callback, "db")) {
+				if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
 					String dbName = query.getString("db");
 					deleteRecords(dbName, query.getJsonObject("parameters"), user, hash, callback);
 				}
 			}
 			else if(type == QueryType.INSERT) {
-				if(checkFieldsPresence(query, callback, "db", "newRecord")) {
+				if(checkFieldsPresence(query, callback, "db", "newRecord", "user", "hash")) {
 					String dbName = query.getString("db");
 					insertNewRecord(dbName, query.getJsonObject("newRecord"), user, hash, callback);
 				}
 			}
 			else if(type == QueryType.UPDATE) {
-				if(checkFieldsPresence(query, callback, "db", "uid", "newRecord")) {
+				if(checkFieldsPresence(query, callback, "db", "uid", "newRecord", "user", "hash")) {
 					String dbName = query.getString("db");
 					updateRecord(dbName, query.getString("uid"), query.getJsonObject("newRecord"), user, hash, callback);
 				}
@@ -179,8 +175,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void exportDatabase(String database, String user, String hash, Consumer<QueryAnswer> callback) {
-		if(!checkPermission(user, hash)) return;
+	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {
 		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
@@ -236,8 +231,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 
 	@Override
-	public void getRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
-		if(!checkPermission(user, hash)) return;
+	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
 		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {

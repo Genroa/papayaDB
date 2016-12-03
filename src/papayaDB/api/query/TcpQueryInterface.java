@@ -44,9 +44,11 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 		super.close();
 	}
 	
-	public void processQuery(String database, JsonObject queryObject, String user, String hash, Consumer<QueryAnswer> callback) {
+	private void processQuery(String database, JsonObject queryObject, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(queryObject);
 		Objects.requireNonNull(callback);
+		Objects.requireNonNull(user);
+		Objects.requireNonNull(hash);
 		
 		queryObject.put("db", database)
 				   .put("user", user)
@@ -78,6 +80,8 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 	@Override
 	public void createNewDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(name);
+		Objects.requireNonNull(user);
+		Objects.requireNonNull(hash);
 		processQuery(name, new JsonObject().put("type", QueryType.CREATEDB.name()), user, hash, callback);
 	}
 
@@ -98,9 +102,11 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 									 			.put("newRecord", newRecord), user, hash, callback);
 	}
 	
-
+	
 	@Override
 	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(database);
+		Objects.requireNonNull(parameters);
 		processQuery(database, new JsonObject().put("type", QueryType.DELETE).put("parameters", parameters), user, hash, callback);
 	}
 	
@@ -114,13 +120,16 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 
 
 	@Override
-	public void getRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
-		processQuery(database, new JsonObject().put("type", QueryType.GET).put("parameters", parameters), user, hash, callback);
+	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(database);
+		Objects.requireNonNull(parameters);
+		processQuery(database, new JsonObject().put("type", QueryType.GET).put("parameters", parameters), null, null, callback);
 	}
 
-
+	
 	@Override
-	public void exportDatabase(String database, String user, String hash, Consumer<QueryAnswer> callback) {
-		processQuery(database, new JsonObject().put("type", QueryType.EXPORTALL), user, hash, callback);
+	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {
+		Objects.requireNonNull(database);
+		processQuery(database, new JsonObject().put("type", QueryType.EXPORTALL), null, null, callback);
 	}
 }

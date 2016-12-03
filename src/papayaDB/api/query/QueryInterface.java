@@ -13,12 +13,12 @@ public interface QueryInterface {
 	
 	public void createNewDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback);
 	public void deleteDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback);
-	public void exportDatabase(String database, String user, String hash, Consumer<QueryAnswer> callback);
+	public void exportDatabase(String database, Consumer<QueryAnswer> callback);
 	
 	public void updateRecord(String database, String uid, JsonObject newRecord, String user, String hash, Consumer<QueryAnswer> callback);
 	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback);
 	public void insertNewRecord(String database, JsonObject record, String user, String hash, Consumer<QueryAnswer> callback);
-	public void getRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback);
+	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback);
 	
 	public default void close() {}
 	
