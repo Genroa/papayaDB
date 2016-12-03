@@ -45,33 +45,69 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 		super.close();
 	}
 
-	public void processQuery(String query, Consumer<QueryAnswer> callback) {
-		JsonObject answer = new JsonObject();
-		System.out.println(query);
-		JsonObject jsonQuery = new JsonObject(query);
-		// TODO vérification à faire sur la clef
-		String dbName = jsonQuery.getString("db");
-		DatabaseCollection collection = collections.get(dbName);
+	private boolean checkFieldsPresence(JsonObject object, Consumer<QueryAnswer> callback, String... fields) {
+		for(String field : fields) {
+			if(!object.containsKey(field)) {
+				callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.SYNTAX_ERROR, field+" field is missing"));
+				return false;
+			}
+		}
+		return true;
+	}
 
-		// Erreur, db innexistante
-		if(collection == null) {
-			answer.put("status", QueryAnswerStatus.SYNTAX_ERROR.name());
-			answer.put("message", "db "+dbName+" doesn't exist");
-			callback.accept(new QueryAnswer(answer));
-			return;
+	public void processQuery(String queryString, Consumer<QueryAnswer> callback) {
+		JsonObject query = new JsonObject(queryString);
+
+		try {
+			QueryType type = QueryType.valueOf(query.getString("type"));
+
+			if(type == QueryType.CREATEDB) {
+				if(checkFieldsPresence(query, callback, "db")) {
+					String dbName = query.getString("db");
+					createNewDatabase(dbName, callback);
+				}
+			}
+			else if(type == QueryType.DELETEDB) {
+				if(checkFieldsPresence(query, callback, "db")) {
+					String dbName = query.getString("db");
+					deleteDatabase(dbName, callback);
+				}
+			}
+			else if(type == QueryType.EXPORTALL) {
+				if(checkFieldsPresence(query, callback, "db")) {
+					String dbName = query.getString("db");
+					exportDatabase(dbName, callback);
+				}
+			}
+			else if(type == QueryType.GET) {
+				if(checkFieldsPresence(query, callback, "db")) {
+					String dbName = query.getString("db");
+					getRecords(dbName, query.getJsonObject("parameters"), callback);
+				}
+			}
+			else if(type == QueryType.DELETE) {
+				if(checkFieldsPresence(query, callback, "db")) {
+					String dbName = query.getString("db");
+					deleteRecords(dbName, query.getJsonObject("parameters"), callback);
+				}
+			}
+			else if(type == QueryType.INSERT) {
+				if(checkFieldsPresence(query, callback, "db", "newRecord")) {
+					String dbName = query.getString("db");
+					insertNewRecord(dbName, query.getJsonObject("newRecord"), callback);
+				}
+			}
+			else if(type == QueryType.UPDATE) {
+				if(checkFieldsPresence(query, callback, "db", "uid", "newRecord")) {
+					String dbName = query.getString("db");
+					updateRecord(dbName, query.getString("uid"), query.getJsonObject("newRecord"), callback);
+				}
+			}
+		}
+		catch(IllegalArgumentException e) {
+			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.SYNTAX_ERROR, "type field is missing or field type doesn't exists"));
 		}
 
-		if(jsonQuery.getString("type").equals("GET")) {
-			System.out.println("Get request, let's launch searchRecords...");
-			answer.put("status", QueryAnswerStatus.OK.name());
-			answer.put("data", new JsonArray(collection.searchRecords(QueryType.GET, jsonQuery)));
-		} else { /* type inconnu */
-			answer.put("status", QueryAnswerStatus.OK.name());
-			answer.put("data", new JsonArray());
-		}
-
-
-		callback.accept(new QueryAnswer(answer));
 	}
 
 	public void onTcpQuery(NetSocket socket) {
@@ -81,8 +117,13 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			System.out.println("Received query: " + buffer.toString());
 
 			processQuery(query, answer -> {
-				socket.write(answer.getData().toString());
-				socket.close();
+				try {
+					socket.write(answer.getData().toString());
+					socket.close();
+				}
+				catch(Exception e) {
+					e.printStackTrace();
+				}
 			});
 
 		});
@@ -174,7 +215,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			callback.accept(QueryAnswer.buildNewEmptyOkAnswer());
 		}
 	}
-	
+
 	@Override
 	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
 		DatabaseCollection collection = collections.get(database);
