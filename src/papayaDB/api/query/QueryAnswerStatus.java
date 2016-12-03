@@ -9,5 +9,6 @@ package papayaDB.api.query;
 public enum QueryAnswerStatus {
 	OK,
 	HOST_UNREACHABLE,
-	SYNTAX_ERROR
+	SYNTAX_ERROR,
+	STATE_ERROR
 }

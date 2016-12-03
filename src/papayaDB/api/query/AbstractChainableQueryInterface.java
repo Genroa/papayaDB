@@ -1,7 +1,5 @@
 package papayaDB.api.query;
 
-import java.util.function.Consumer;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 
@@ -22,11 +20,6 @@ public abstract class AbstractChainableQueryInterface extends AbstractVerticle i
 	 */
 	public AbstractChainableQueryInterface() {
 		vertx = Vertx.vertx();
-	}
-
-	@Override
-	public void processQuery(String query, Consumer<QueryAnswer> callback) {
-		throw new UnsupportedOperationException();
 	}
 	
 	/**

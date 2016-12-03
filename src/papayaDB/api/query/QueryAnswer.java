@@ -1,5 +1,8 @@
 package papayaDB.api.query;
 
+import java.util.List;
+
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -35,5 +38,18 @@ public class QueryAnswer {
 	
 	public JsonObject getData() {
 		return this.data;
+	}
+	
+	public static QueryAnswer buildNewErrorAnswer(QueryAnswerStatus status, String message) {
+		if(status == QueryAnswerStatus.OK) throw new IllegalArgumentException("OK status can't be used as an error status");
+		return new QueryAnswer(new JsonObject().put("type", status.name()).put("message", message));
+	}
+	
+	public static QueryAnswer buildNewDataAnswer(List<JsonObject> objects) {
+		return new QueryAnswer(new JsonObject().put("type", QueryAnswerStatus.OK.name()).put("data", new JsonArray(objects)));
+	}
+	
+	public static QueryAnswer buildNewEmptyOkAnswer() {
+		return new QueryAnswer(new JsonObject().put("type", QueryAnswerStatus.OK.name()));
 	}
 }

@@ -9,7 +9,7 @@ import papayaDB.api.query.SyntaxErrorException;
 
 public class Fields extends QueryParameter {
 	public static void registerParameter() {
-		QueryParameter.parameter.get(QueryType.DELETEFIELD).put("fields", new Fields());
+		QueryParameter.parameter.get(QueryType.DELETE).put("fields", new Fields());
 		QueryParameter.parameter.get(QueryType.GET).put("fields", new Fields());
 		QueryParameter.parameter.get(QueryType.INSERT).put("fields", new Fields());
 		QueryParameter.parameter.get(QueryType.UPDATE).put("fields", new Fields());

@@ -84,7 +84,7 @@ public class DatabaseCollection {
 		return null;
 	}
 	
-	public List<JsonObject> searchRecords(JsonObject query) {
+	public ArrayList<JsonObject> searchRecords(QueryType type, JsonObject parameters) {
 		System.out.println("Searching records...");
 		/*
 		Stream<JsonObject> res = elements.values().stream().map(record -> record.getRecord());
@@ -93,7 +93,7 @@ public class DatabaseCollection {
 		
 		return res.collect(Collectors.toList());
 		*/
-		Stream<JsonObject> res = processParameters(query);
+		Stream<JsonObject> res = processParameters(parameters);
 		return new ArrayList<>();
 	}
 }

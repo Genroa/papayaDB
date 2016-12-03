@@ -24,9 +24,9 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	 */
 	private final String host;
 	
-	private final String user;
+	private String user;
 	
-	private final String hash;
+	private String hash;
 	
 	/**
 	 * Crée une nouvelle connexion vers une interface de requête papayaDB.
@@ -47,7 +47,6 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		super.close();
 	}
 	
-	@Override
 	public void processQuery(String query, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
 		client.getNow(port, host, "/"+query, response -> {
@@ -58,8 +57,8 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 
 	@Override
 	public void setAuthInformations(String user, String hash) {
-		// TODO Auto-generated method stub
-		
+		this.user = user;
+		this.hash = hash;
 	}
 
 	@Override
