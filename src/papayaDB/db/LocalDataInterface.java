@@ -30,7 +30,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	private final Map<String, DatabaseCollection> collections;
 	private final Map<String, String> users;
 
-	public LocalDataInterface(int listeningPort, Map<String, DatabaseCollection> collections) {
+	public LocalDataInterface(int listeningPort, HashMap<String, DatabaseCollection> collections) {
 		NetServerOptions options = new NetServerOptions().setPort(listeningPort);
 		tcpServer = getVertx().createNetServer(options);
 		tcpServer.connectHandler(this::onTcpQuery);
