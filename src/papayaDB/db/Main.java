@@ -36,7 +36,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		System.setProperty("vertx.disableFileCaching", "true");
-
+		
 		Vertx vertx = Vertx.vertx();
 		DatabaseIndexManager indexManager = new DatabaseIndexManager();
 		HashMap<String, DatabaseCollection> collections = loadCollections(indexManager);
