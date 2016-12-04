@@ -38,8 +38,6 @@ public class UrlToQuery {
 			generateErrorMessage(json, "invalid number of query parameters");
 			return json;
 		} 
-		System.out.println(Arrays.toString(params));
-		System.out.println("param1 = " + params[1]);
 		if(!put(json, "db", params[1], type)) {
 			return json;
 		}
@@ -47,7 +45,6 @@ public class UrlToQuery {
 			return json;
 		}
 		for (int i = 2; i < params.length; i += 2) {
-			System.out.println(params[i] + " " + params[i+1]);
 			if(!put(json, params[i], params[i+1], type)) {
 				break;
 			}
@@ -67,7 +64,6 @@ public class UrlToQuery {
 	 * 			Type de requete
 	 */
 	private static boolean put(JsonObject json, String key, String value, QueryType type) {
-		//System.out.println("TRY PUT : " + key + " with value " + value);
 		Optional<QueryParameter> query = QueryParameter.getQueryParameterKey(type, key);
 		if(!query.isPresent()) {
 			generateErrorMessage(json, "parameter " + key + " doesn't exists");

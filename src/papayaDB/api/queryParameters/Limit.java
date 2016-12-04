@@ -14,7 +14,6 @@ public class Limit extends QueryParameter {
 	}
 	
 	public static void registerParameter() {
-		System.out.println("Ask to Register Method");
 		QueryParameter.parameter.get(QueryType.GET).put("limit", new Limit());
 	}
 
