@@ -28,7 +28,7 @@ public class DatabaseCollection {
 	/**
 	 * La Map contenant les TreeMap représentant les index d'optimisation sur la Map des éléments
 	 */
-	private final Map<String, TreeMap<?, Integer>> indexes = new HashMap<>();
+	private final TreeMap<String, TreeMap<Comparable<?>, Integer>> indexes = new TreeMap<>();
 	
 	/**
 	 * Le StorageManager stockant physiquement la collection
@@ -48,6 +48,10 @@ public class DatabaseCollection {
 	@Override
 	public String toString() {
 		return "Collection "+name;
+	}
+	
+	public TreeMap<String, TreeMap<Comparable<?>, Integer>> getIndexes() {
+		return indexes;
 	}
 	
 	private Stream<JsonObject> processParameters(QueryType type, JsonObject parametersContainer) {

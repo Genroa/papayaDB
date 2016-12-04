@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
 import papayaDB.api.query.SyntaxErrorException;
-import papayaDB.db.FileStorageManager;
+import papayaDB.db.DatabaseCollection;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
@@ -185,7 +185,7 @@ public abstract class QueryParameter {
 	 * @param elements
 	 * @return
 	 */
-	public Stream<Map.Entry<Integer, Integer>> processQueryParameters(JsonObject parameters, Stream<Map.Entry<Integer, Integer>> elements, FileStorageManager storageManager) {
+	public Stream<Map.Entry<Integer, Integer>> processQueryParameters(JsonObject parameters, Stream<Map.Entry<Integer, Integer>> elements, DatabaseCollection collection) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -196,7 +196,7 @@ public abstract class QueryParameter {
 	 * @param storageManager
 	 * @return
 	 */
-	public Stream<JsonObject> processTerminalOperation(JsonObject parameters, Stream<JsonObject> elements, FileStorageManager storageManager) {
+	public Stream<JsonObject> processTerminalOperation(JsonObject parameters, Stream<JsonObject> elements, DatabaseCollection collection) {
 		throw new UnsupportedOperationException();
 	}
 	

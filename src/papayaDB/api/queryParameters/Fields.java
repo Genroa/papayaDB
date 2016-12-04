@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
 import papayaDB.api.query.SyntaxErrorException;
-import papayaDB.db.FileStorageManager;
+import papayaDB.db.DatabaseCollection;
 
 public class Fields extends QueryParameter {
 	public static void registerParameter() {
@@ -35,7 +35,7 @@ public class Fields extends QueryParameter {
 	}
 	
 	// L'ordre d'appel des queryParameters compte!
-	public Stream<JsonObject> processTerminalOperation(JsonObject parameters, Stream<JsonObject> elements, FileStorageManager storageManager) {
+	public Stream<JsonObject> processTerminalOperation(JsonObject parameters, Stream<JsonObject> elements, DatabaseCollection collection) {
 		JsonArray array = parameters.getJsonArray("value");
 		
 		return elements.filter(json -> {

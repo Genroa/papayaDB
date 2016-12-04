@@ -1,15 +1,13 @@
 package papayaDB.api.queryParameters;
 
-import java.text.NumberFormat;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Stream;
-
-import com.fasterxml.jackson.databind.ser.std.NumberSerializer;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
-import papayaDB.db.FileStorageManager;
+import papayaDB.db.DatabaseCollection;
 
 public class Equals extends QueryParameter {
 	
@@ -60,7 +58,7 @@ public class Equals extends QueryParameter {
 	}
 	
 	@Override
-	public Stream<Map.Entry<Integer, Integer>> processQueryParameters(JsonObject parameters, Stream<Map.Entry<Integer, Integer>> elements, FileStorageManager storageManager) {
+	public Stream<Map.Entry<Integer, Integer>> processQueryParameters(JsonObject parameters, Stream<Map.Entry<Integer, Integer>> elements, DatabaseCollection collection) {
 		/*
 		 * 1. Récupérer le Stream, fabriquer les JsonObject, comparer sur le champ.
 		 * {
@@ -78,8 +76,9 @@ public class Equals extends QueryParameter {
 		}
 		 */
 		JsonArray fieldsParameters = parameters.getJsonArray("value");
+		
 		return elements.filter(entry -> {
-			JsonObject doc = storageManager.getRecordAtAddress(entry.getKey());
+			JsonObject doc = collection.getStorageManager().getRecordAtAddress(entry.getKey());
 			for(Object paramObject : fieldsParameters) {
 				JsonObject param = (JsonObject) paramObject;
 				String field = param.getString("field");

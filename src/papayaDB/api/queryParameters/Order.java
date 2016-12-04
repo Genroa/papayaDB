@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
 import papayaDB.api.query.SyntaxErrorException;
-import papayaDB.db.FileStorageManager;
+import papayaDB.db.DatabaseCollection;
 
 public class Order extends QueryParameter {
 	public static void registerParameter() {
@@ -30,7 +30,7 @@ public class Order extends QueryParameter {
 	}
 	
 	@Override
-	public Stream<Map.Entry<Integer, Integer>> processQueryParameters(JsonObject parameters, Stream<Map.Entry<Integer, Integer>> elements, FileStorageManager storageManager) {
+	public Stream<Map.Entry<Integer, Integer>> processQueryParameters(JsonObject parameters, Stream<Map.Entry<Integer, Integer>> elements, DatabaseCollection collection) {
 		/*
 		 * 1. Récupérer le Stream, fabriquer les JsonObject, comparer sur les champs, 
 		 */
