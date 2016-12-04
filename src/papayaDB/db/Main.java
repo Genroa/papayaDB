@@ -17,7 +17,6 @@ public class Main {
 			if(!folder.exists()) {
 				folder.mkdir();
 			}
-			
 
 			for(File file : folder.listFiles()) {
 				if(file.isFile()) {
@@ -25,7 +24,8 @@ public class Main {
 					String nameWithoutExtension = name.substring(0, name.length()-5);
 					DatabaseCollection collection = new DatabaseCollection(nameWithoutExtension);
 					collections.put(nameWithoutExtension, collection);
-					indexManager.addIndexToCreate(collection, "uid");
+					indexManager.addIndexToCreate(collection, "_uid");
+					System.out.println("Added index to create");
 				}
 			}
 		} catch (IOException e) {

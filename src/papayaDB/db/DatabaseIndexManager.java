@@ -30,14 +30,17 @@ public class DatabaseIndexManager extends AbstractVerticle {
 			
 			// Pour chaque élément existant on l'ajoute en trié dans la TreeMap
 			FileStorageManager storageManager = indexQuery.getKey().getStorageManager();
+			System.out.println("NUMBER "+storageManager.getRecordsNumber());
 			Stream<Entry<Integer, Integer>> addressStream = storageManager.getRecordsMap().entrySet().stream();
 			addressStream.map(entry -> {
 				JsonObject doc = storageManager.getRecordAtAddress(entry.getKey());
+				System.out.println("object:"+((Comparable<?>) doc.getValue(indexQuery.getValue())));
+				System.out.println("key:"+entry.getKey());
 				index.put(((Comparable<?>) doc.getValue(indexQuery.getValue())), entry.getKey());
-				return null;
-			});
+				return doc;
+			}).findAny();
 			
-			System.out.println(index);
+			System.out.println("index tree "+index);
 		}
 		try {
 			Thread.sleep(1000);
