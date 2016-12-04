@@ -47,12 +47,14 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 	private void processQuery(String database, JsonObject queryObject, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(queryObject);
 		Objects.requireNonNull(callback);
-		Objects.requireNonNull(user);
-		Objects.requireNonNull(hash);
 		
-		queryObject.put("db", database)
-				   .put("user", user)
-				   .put("password", hash);
+		queryObject.put("db", database);
+		if(user != null) {
+			queryObject.put("user", user);
+		}
+		if(hash != null) {
+			queryObject.put("hash", hash);
+		}
 		
 		
 		client.connect(port, host, connectHandler -> {
@@ -106,8 +108,11 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 	@Override
 	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
-		Objects.requireNonNull(parameters);
-		processQuery(database, new JsonObject().put("type", QueryType.DELETE).put("parameters", parameters), user, hash, callback);
+		JsonObject obj = new JsonObject().put("type", QueryType.DELETE);
+		if(parameters != null) {
+			obj.put("parameters", parameters);
+		}
+		processQuery(database, obj, user, hash, callback);
 	}
 	
 
@@ -122,10 +127,13 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 	@Override
 	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
-		Objects.requireNonNull(parameters);
-		processQuery(database, new JsonObject().put("type", QueryType.GET).put("parameters", parameters), null, null, callback);
+		JsonObject obj = new JsonObject().put("type", QueryType.GET);
+		if(parameters != null) {
+			obj.put("parameters", parameters);
+		}
+		processQuery(database, obj, null, null, callback);
 	}
-
+	
 	
 	@Override
 	public void exportDatabase(String database, Consumer<QueryAnswer> callback) {

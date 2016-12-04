@@ -82,7 +82,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 		
 		tcpClient.createNewDatabase(json.getString("db"),
 									json.getJsonObject("auth").getString("user"), 
-									json.getJsonObject("auth").getString("pass"), 
+									json.getJsonObject("auth").getString("hash"), 
 									answer -> {
 										response.putHeader("content-type", "application/json")
 										.end(Json.encodePrettily(answer.getData()));
@@ -102,7 +102,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 		
 		tcpClient.deleteDatabase(json.getString("db"),
 									json.getJsonObject("auth").getString("user"), 
-									json.getJsonObject("auth").getString("pass"), 
+									json.getJsonObject("auth").getString("hash"), 
 									answer -> {
 										response.putHeader("content-type", "application/json")
 										.end(Json.encodePrettily(answer.getData()));
@@ -144,7 +144,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 								body.getString("uid"),
 								body.getJsonObject("newRecord"),
 								json.getJsonObject("auth").getString("user"), 
-								json.getJsonObject("auth").getString("pass"), 
+								json.getJsonObject("auth").getString("hash"), 
 								answer -> {
 									response.putHeader("content-type", "application/json")
 									.end(Json.encodePrettily(answer.getData()));
@@ -165,7 +165,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 		tcpClient.deleteRecords(json.getString("db"),
 								json.getJsonObject("parameters"),
 								json.getJsonObject("auth").getString("user"), 
-								json.getJsonObject("auth").getString("pass"), 
+								json.getJsonObject("auth").getString("hash"), 
 								answer -> {
 									response.putHeader("content-type", "application/json")
 									.end(Json.encodePrettily(answer.getData()));
@@ -188,7 +188,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 		tcpClient.insertNewRecord(json.getString("db"),
 									body.getJsonObject("record"),
 									json.getJsonObject("auth").getString("user"), 
-									json.getJsonObject("auth").getString("pass"), 
+									json.getJsonObject("auth").getString("hash"), 
 									answer -> {
 										response.putHeader("content-type", "application/json")
 										.end(Json.encodePrettily(answer.getData()));

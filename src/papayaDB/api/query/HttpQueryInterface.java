@@ -104,12 +104,14 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	@Override
 	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
-		Objects.requireNonNull(parameters);
 		StringBuilder sb = new StringBuilder("/delete/" + database);
-		for (String key: parameters.fieldNames()) {
-			// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
-			// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
-			sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
+		
+		if(parameters != null) {
+			for (String key: parameters.fieldNames()) {
+				// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
+				// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
+				sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
+			}
 		}
 		processDeleteQuery(sb.toString(), user, hash, callback);
 	}
@@ -120,16 +122,18 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		Objects.requireNonNull(record);
 		processPostQuery("/insert/" + database, record, user, hash, callback);
 	}
-
+	
 	@Override
 	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
-		Objects.requireNonNull(parameters); 
 		StringBuilder sb = new StringBuilder("/get/" + database);
-		for (String key: parameters.fieldNames()) {
-			// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
-			// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
-			sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
+		
+		if(parameters != null) {
+			for (String key: parameters.fieldNames()) {
+				// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
+				// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
+				sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
+			}
 		}
 		processGetQuery(sb.toString(), callback);
 	}

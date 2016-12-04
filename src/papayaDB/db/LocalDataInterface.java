@@ -111,7 +111,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 		
 		String user = (String) query.getValue("user", null);
 		String hash = (String) query.getValue("hash", null);
-		
+		System.out.println(query);
 		try {
 			QueryType type = QueryType.valueOf(query.getString("type"));
 
@@ -188,6 +188,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	public void createNewDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
 		if(!checkPermission(user, hash)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+			return;
 		}
 		
 		if(collections.containsKey(name)) {
@@ -208,6 +209,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	public void deleteDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
 		if(!checkPermission(user, hash)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+			return;
 		}
 		
 		if(!collections.containsKey(name)) {
@@ -242,6 +244,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	public void updateRecord(String database, String uid, JsonObject newRecord, String user, String hash, Consumer<QueryAnswer> callback) {
 		if(!checkPermission(user, hash)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+			return;
 		}
 		
 		DatabaseCollection collection = collections.get(database);
@@ -261,6 +264,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
 		if(!checkPermission(user, hash)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+			return;
 		}
 		
 		DatabaseCollection collection = collections.get(database);
@@ -280,6 +284,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	public void insertNewRecord(String database, JsonObject record, String user, String hash, Consumer<QueryAnswer> callback) {
 		if(!checkPermission(user, hash)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+			return;
 		}
 		
 		DatabaseCollection collection = collections.get(database);
@@ -300,7 +305,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
 		}
 		else {
-			List<JsonObject> objects = collection.searchRecords(QueryType.GET, parameters.getJsonObject("parameters"));
+			List<JsonObject> objects = collection.searchRecords(QueryType.GET, parameters);
 			callback.accept(QueryAnswer.buildNewDataAnswer(objects));
 		}
 	}

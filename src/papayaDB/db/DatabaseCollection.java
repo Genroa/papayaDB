@@ -41,21 +41,10 @@ public class DatabaseCollection {
 		this.storageManager = new FileStorageManager(name);
 	}
 	
-	private Stream<JsonObject> processParameters(JsonObject query) {
-		if(!query.containsKey("type")) throw new SyntaxErrorException("No query type providen");
-		String typeString = query.getString("type");
-		QueryType type;
+	private Stream<JsonObject> processParameters(QueryType type, JsonObject parametersContainer) {
 		Stream<JsonObject> terminalResult = null;
 		Stream<Entry<Integer, Integer>> result = storageManager.getRecordsMap().entrySet().stream();
 		
-		try {
-			type = QueryType.valueOf(typeString);
-		}
-		catch(IllegalArgumentException e) {
-			throw new SyntaxErrorException("Query type "+typeString+" doesn't exists");
-		}
-		
-		JsonObject parametersContainer = query.getJsonObject("parameters");
 		if(parametersContainer != null) {
 			ArrayList<String> parametersNames = new ArrayList<>(parametersContainer.fieldNames());
 			parametersNames.sort((parameterName1, parameterName2) -> {
@@ -113,7 +102,7 @@ public class DatabaseCollection {
 	
 	public List<JsonObject> searchRecords(QueryType type, JsonObject parameters) {
 		System.out.println("Searching records...");
-		Stream<JsonObject> res = processParameters(parameters);
+		Stream<JsonObject> res = processParameters(type, parameters);
 		return res.collect(Collectors.toList());
 	}
 	
