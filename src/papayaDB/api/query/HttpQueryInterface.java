@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.queryParameters.QueryParameter;
 
@@ -56,12 +57,18 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	public void processPostQuery(String query, JsonObject body, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
 		query = query + "/auth/[" + user + ";" + hash + "]";
-		client.post(port, host, query, resp -> {
+		HttpClientRequest request = client.post(port, host, query, resp -> {
 			System.out.println("Got response " + resp.statusCode());
 			resp.bodyHandler(bodyResponse -> {
 				callback.accept(new QueryAnswer(bodyResponse.toJsonObject()));
 			});
-		}).end(body.toString());
+		});
+		if(body.isEmpty()) {
+			request.end();
+		} else {
+			request.end(body.toString());
+		}
+		
 	}
 	
 	public void processDeleteQuery(String query, String user, String hash, Consumer<QueryAnswer> callback) {
