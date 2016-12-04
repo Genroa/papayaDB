@@ -56,7 +56,6 @@ public class Equals extends QueryParameter {
 			}
 				
 		}
-		System.out.println("EQUALS: "+sb.deleteCharAt(sb.length() - 1).toString());
 		return sb.deleteCharAt(sb.length() - 1).toString();
 	}
 	

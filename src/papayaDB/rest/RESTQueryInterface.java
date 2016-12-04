@@ -89,7 +89,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 		}
 		tcpClient.createNewDatabase(json.getString("db"),
 									json.getJsonObject("auth").getString("user"), 
-									json.getJsonObject("auth").getString("pass"), 
+									json.getJsonObject("auth").getString("hash"), 
 									answer -> {
 										routingContext.response().putHeader("content-type", "application/json")
 										.end(Json.encodePrettily(answer.getData()));
@@ -104,7 +104,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 		
 		tcpClient.deleteDatabase(json.getString("db"),
 									json.getJsonObject("auth").getString("user"), 
-									json.getJsonObject("auth").getString("pass"), 
+									json.getJsonObject("auth").getString("hash"), 
 									answer -> {
 										routingContext.response().putHeader("content-type", "application/json")
 										.end(Json.encodePrettily(answer.getData()));
@@ -153,7 +153,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 		tcpClient.deleteRecords(json.getString("db"),
 								json.getJsonObject("parameters"),
 								json.getJsonObject("auth").getString("user"), 
-								json.getJsonObject("auth").getString("pass"), 
+								json.getJsonObject("auth").getString("hash"), 
 								answer -> {
 									routingContext.response().putHeader("content-type", "application/json")
 									.end(Json.encodePrettily(answer.getData()));
@@ -180,6 +180,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 	}
 
 	public void getRecords(RoutingContext routingContext) {
+		System.out.println("[GetRecord:Path]"+routingContext.request().path());
 		JsonObject json = onRESTQuery(routingContext, QueryType.GET);
 		if(json == null) {
 			return;
