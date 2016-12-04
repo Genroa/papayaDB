@@ -56,7 +56,7 @@ public class RESTQueryInterface extends AbstractVerticle{
 	
 	public void listen() {
 		listeningServer.requestHandler(router::accept).listen(listeningPort);
-		System.out.println("Now listening for HTTP REST queries...");
+		System.out.println("[REST:listen]Now listening for HTTP REST queries...");
 	}
 	
 	public void close() {
@@ -79,7 +79,6 @@ public class RESTQueryInterface extends AbstractVerticle{
 			.end(Json.encodePrettily(json));
 			return;
 		}
-		
 		tcpClient.createNewDatabase(json.getString("db"),
 									json.getJsonObject("auth").getString("user"), 
 									json.getJsonObject("auth").getString("hash"), 
@@ -138,17 +137,18 @@ public class RESTQueryInterface extends AbstractVerticle{
 			return;
 		}
 		
-		JsonObject body = routingContext.getBody().toJsonObject();
-		
-		tcpClient.updateRecord(json.getString("db"),
-								body.getString("uid"),
-								body.getJsonObject("newRecord"),
-								json.getJsonObject("auth").getString("user"), 
-								json.getJsonObject("auth").getString("hash"), 
-								answer -> {
-									response.putHeader("content-type", "application/json")
-									.end(Json.encodePrettily(answer.getData()));
-								});
+		request.bodyHandler(buffer -> {
+			JsonObject body = buffer.toJsonObject();
+			tcpClient.updateRecord(json.getString("db"),
+					body.getString("uid"),
+					body.getJsonObject("newRecord"),
+					json.getJsonObject("auth").getString("user"), 
+					json.getJsonObject("auth").getString("hash"), 
+					answer -> {
+						response.putHeader("content-type", "application/json")
+						.end(Json.encodePrettily(answer.getData()));
+					});
+		});
 	}
 
 	public void deleteRecords(RoutingContext routingContext) {
@@ -182,17 +182,17 @@ public class RESTQueryInterface extends AbstractVerticle{
 			.end(Json.encodePrettily(json));
 			return;
 		}
-		
-		JsonObject body = routingContext.getBody().toJsonObject();
-		
-		tcpClient.insertNewRecord(json.getString("db"),
-									body.getJsonObject("record"),
-									json.getJsonObject("auth").getString("user"), 
-									json.getJsonObject("auth").getString("hash"), 
-									answer -> {
-										response.putHeader("content-type", "application/json")
-										.end(Json.encodePrettily(answer.getData()));
-									});
+		request.bodyHandler(buffer -> {
+			JsonObject body = buffer.toJsonObject();
+			tcpClient.insertNewRecord(json.getString("db"),
+					body,
+					json.getJsonObject("auth").getString("user"), 
+					json.getJsonObject("auth").getString("hash"), 
+					answer -> {
+						response.putHeader("content-type", "application/json")
+						.end(Json.encodePrettily(answer.getData()));
+					});
+		});
 	}
 
 	public void getRecords(RoutingContext routingContext) {

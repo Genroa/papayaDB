@@ -81,6 +81,7 @@ class TcpQueryInterface extends AbstractChainableQueryInterface {
 
 	@Override
 	public void createNewDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
+		System.out.println(name+" "+user+" "+hash);
 		Objects.requireNonNull(name);
 		Objects.requireNonNull(user);
 		Objects.requireNonNull(hash);

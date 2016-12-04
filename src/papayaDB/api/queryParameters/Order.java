@@ -1,8 +1,12 @@
 package papayaDB.api.queryParameters;
 
+import java.util.Map;
+import java.util.stream.Stream;
+
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
 import papayaDB.api.query.SyntaxErrorException;
+import papayaDB.db.FileStorageManager;
 
 public class Order extends QueryParameter {
 	public static void registerParameter() {
@@ -24,6 +28,15 @@ public class Order extends QueryParameter {
 		StringBuilder sb = new StringBuilder(key).append("/[");
 		sb.append(value.getString("field")).append(";").append(value.getString("way"));
 		return sb.append("]").toString();
+	}
+	
+	@Override
+	public Stream<Map.Entry<Integer, Integer>> processQueryParameters(JsonObject parameters, Stream<Map.Entry<Integer, Integer>> elements, FileStorageManager storageManager) {
+		/*
+		 * 1. Récupérer le Stream, fabriquer les JsonObject, comparer sur les champs, 
+		 */
+		// TODO faire le order
+		return null;
 	}
 }
  

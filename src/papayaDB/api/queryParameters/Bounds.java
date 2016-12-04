@@ -1,8 +1,12 @@
 package papayaDB.api.queryParameters;
 
+import java.util.Map;
+import java.util.stream.Stream;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
+import papayaDB.db.FileStorageManager;
 
 public class Bounds extends QueryParameter {
 	public static void registerParameter() {
@@ -34,10 +38,54 @@ public class Bounds extends QueryParameter {
 		for (Object ja: value.getJsonArray("value")) { //On itère sur les éléments du json array (retourne un Object)
 			JsonObject jo = ((JsonObject)ja);			//On transforme l'Objet en JsonObject
 			sb	.append(jo.getString("field")).append(";")
-				.append(jo.getInteger("min").toString()).append(";")
-				.append(jo.getInteger("max").toString()).append(";");
+				.append(jo.getInteger("min")).append(";")
+				.append(jo.getInteger("max")).append(";");
 		}
 		return sb.deleteCharAt(sb.length() - 1).append("]").toString();
+	}
+	
+	@Override
+	public Stream<Map.Entry<Integer, Integer>> processQueryParameters(JsonObject parameters, Stream<Map.Entry<Integer, Integer>> elements, FileStorageManager storageManager) {
+		/*
+		 * 1. Récupérer le Stream, fabriquer les JsonObject, comparer sur le champ.
+		 * "bounds": 
+			{
+				"value":
+				[
+					{
+						"field": fieldName,
+						"min": 0,
+						"max": 12
+					},
+					{
+						"field": fieldName,
+						"min": 0,
+						"max": 12
+					}
+				]
+			}
+		 */
+		JsonArray fieldsParameters = parameters.getJsonArray("value");
+		return elements.filter(entry -> {
+			JsonObject doc = storageManager.getRecordAtAddress(entry.getKey());
+			for(Object paramObject : fieldsParameters) {
+				JsonObject param = (JsonObject) paramObject;
+				String field = param.getString("field");
+				
+				System.out.println("Comparaison entre : " + field + " et " + param.getValue("min")+" "+param.getValue("max"));
+		
+				if(!doc.containsKey(field)) return false;
+				Object value = doc.getValue(field);
+				Object minBound = param.getValue("min");
+				Object maxBound = param.getValue("max");
+				System.out.println("MAX BOUND CLASS "+maxBound.getClass());
+				if(minBound instanceof Number && maxBound instanceof Number && value instanceof Number) {
+					if(((double) value) < ((double)minBound) || ((double)value) >= ((double)maxBound)) return false;
+				}
+				// TODO finir
+			}
+			return true;
+		});
 	}
 }
  

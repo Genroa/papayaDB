@@ -33,8 +33,11 @@ public class FileStorageManager {
 	private MappedByteBuffer fileBuffer;
 	private HashMap<Integer, ArrayList<Integer>> holesMap = new HashMap<>();
 	private HashMap<Integer, Integer> addressMapping = new HashMap<>();
+	private final String fileName;
 	
 	public FileStorageManager(String fileName) throws IOException {
+		this.fileName = fileName;
+		
 		Path pathToFile = Paths.get(fileName+".coll");
 		if (!Files.exists(pathToFile, LinkOption.NOFOLLOW_LINKS)) {
 			Files.createFile(pathToFile);
@@ -59,7 +62,6 @@ public class FileStorageManager {
 			recordsNumber = fileBuffer.getInt();
 		}
 		fileBuffer.rewind();
-		
 		loadRecords();
 	}
 	
@@ -73,28 +75,24 @@ public class FileStorageManager {
 		fileBuffer.rewind();
 		fileBuffer.getInt();
 		try {
-//			System.out.println("Loading "+recordsNumber+" records...");
 			for(int i = 0; i < recordsNumber;) {
 				
 				int objectSize = fileBuffer.getInt();
 				if(objectSize == EMPTY_CHUNK_SECTION) {
 					int nextObjectPositionInChunks = fileBuffer.getInt();
-//					System.out.println("Hole found : "+nextObjectPositionInChunks+" chunks");
 					registerChunkSectionAsHole(fileBuffer.position()-(Integer.BYTES*2), nextObjectPositionInChunks);
 					
-					// Position + nouvelle position en chunks (relatifs) - la lecture de l'int indiquant la nouvelle position
 					fileBuffer.position(fileBuffer.position()+nextObjectPositionInChunks*CHUNK_SIZE-(Integer.BYTES*2));
 					continue;
 				}
 				int objectPosition = fileBuffer.position()-Integer.BYTES;
-				System.out.println("Loading object, chunk size "+computeChunkSize(objectSize)+" bytes at pos "+objectPosition);
 				addressMapping.put(objectPosition, objectSize);
 				
 				fileBuffer.position(objectPosition+computeChunkSize(objectSize));
 				i++;
 			}
 		} catch(BufferUnderflowException e) {
-			System.out.println("Corrupted database collection??");
+			System.out.println("[DB:StorageManager("+fileName+"):loadRecords]Corrupted database collection??");
 		}
 	}
 	

@@ -47,7 +47,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 				Files.createFile(pathToFile);
 			}
 			catch (IOException e) {
-				System.err.println("Couldn't open or create the users permission file. Exitting...");
+				System.err.println("[DB:LocalInterface:loadAuthorizedUsers]Couldn't open or create the users permission file. Exiting...");
 			}
 		}
 		
@@ -61,15 +61,16 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 		    while ((line = br.readLine()) != null) {
 		        String[] infos = line.split(" ");
 		        if(infos.length != 2) {
-		        	System.err.println("Incorrect user information format: "+line);
+		        	System.err.println("[DB:LocalInterface:loadAuthorizedUsers]Incorrect user information format: "+line);
 		        	continue;
 		        }
 		        users.put(infos[0], infos[1]);
+		        System.out.println("[DB:LocalInterface:loadAuthorizedUsers]New authorized user : "+infos[0]+" "+infos[1]);
 		    }
 		} catch (FileNotFoundException e) {
-			System.err.println("Couldn't find the users permission file. Exitting...");
+			System.err.println("[DB:LocalInterface:loadAuthorizedUsers]Couldn't find the users permission file. Exiting...");
 		} catch (IOException e) {
-			System.err.println("Error with the users permission file. Exitting...");
+			System.err.println("[DB:LocalInterface:loadAuthorizedUsers]Error with the users permission file. Exiting...");
 		}
 		
 		return users;
@@ -83,7 +84,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 
 	public void listen() {
 		tcpServer.listen();
-		System.out.println("Now listening for TCP string queries...");
+		System.out.println("[DB:LocalInterface:listen]Now listening for TCP string queries...");
 	}
 
 	@Override
@@ -103,69 +104,70 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 	
 	private boolean checkPermission(String user, String hash) {
-		return users.get(user) == hash;
+		return users.get(user).equals(hash);
 	}
 
 	public void processQuery(String queryString, Consumer<QueryAnswer> callback) {
 		JsonObject query = new JsonObject(queryString);
-		
+		QueryType type = null;
 		String user = (String) query.getValue("user", null);
 		String hash = (String) query.getValue("hash", null);
+		
 		System.out.println(query);
 		try {
-			QueryType type = QueryType.valueOf(query.getString("type"));
-
-			if(type == QueryType.CREATEDB) {
-				if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
-					String dbName = query.getString("db");
-					createNewDatabase(dbName, user, hash, callback);
-				}
-			}
-			else if(type == QueryType.DELETEDB) {
-				if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
-					String dbName = query.getString("db");
-					deleteDatabase(dbName, user, hash, callback);
-				}
-			}
-			else if(type == QueryType.EXPORTALL) {
-				if(checkFieldsPresence(query, callback, "db")) {
-					String dbName = query.getString("db");
-					exportDatabase(dbName, callback);
-				}
-			}
-			else if(type == QueryType.GET) {
-				if(checkFieldsPresence(query, callback, "db")) {
-					String dbName = query.getString("db");
-					getRecords(dbName, query.getJsonObject("parameters"), callback);
-				}
-			}
-			else if(type == QueryType.DELETE) {
-				if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
-					String dbName = query.getString("db");
-					deleteRecords(dbName, query.getJsonObject("parameters"), user, hash, callback);
-				}
-			}
-			else if(type == QueryType.INSERT) {
-				if(checkFieldsPresence(query, callback, "db", "newRecord", "user", "hash")) {
-					String dbName = query.getString("db");
-					insertNewRecord(dbName, query.getJsonObject("newRecord"), user, hash, callback);
-				}
-			}
-			else if(type == QueryType.UPDATE) {
-				if(checkFieldsPresence(query, callback, "db", "uid", "newRecord", "user", "hash")) {
-					String dbName = query.getString("db");
-					updateRecord(dbName, query.getString("uid"), query.getJsonObject("newRecord"), user, hash, callback);
-				}
-			}
+			type = QueryType.valueOf(query.getString("type"));
 		}
 		catch(IllegalArgumentException e) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.SYNTAX_ERROR, "type field is missing or field type doesn't exists"));
+			return;
 		}
-
+		
+		if(type == QueryType.CREATEDB) {
+			if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
+				String dbName = query.getString("db");
+				createNewDatabase(dbName, user, hash, callback);
+			}
+		}
+		else if(type == QueryType.DELETEDB) {
+			if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
+				String dbName = query.getString("db");
+				deleteDatabase(dbName, user, hash, callback);
+			}
+		}
+		else if(type == QueryType.EXPORTALL) {
+			if(checkFieldsPresence(query, callback, "db")) {
+				String dbName = query.getString("db");
+				exportDatabase(dbName, callback);
+			}
+		}
+		else if(type == QueryType.GET) {
+			if(checkFieldsPresence(query, callback, "db")) {
+				String dbName = query.getString("db");
+				getRecords(dbName, query.getJsonObject("parameters"), callback);
+			}
+		}
+		else if(type == QueryType.DELETE) {
+			if(checkFieldsPresence(query, callback, "db", "user", "hash")) {
+				String dbName = query.getString("db");
+				deleteRecords(dbName, query.getJsonObject("parameters"), user, hash, callback);
+			}
+		}
+		else if(type == QueryType.INSERT) {
+			if(checkFieldsPresence(query, callback, "db", "newRecord", "user", "hash")) {
+				String dbName = query.getString("db");
+				insertNewRecord(dbName, query.getJsonObject("newRecord"), user, hash, callback);
+			}
+		}
+		else if(type == QueryType.UPDATE) {
+			if(checkFieldsPresence(query, callback, "db", "uid", "newRecord", "user", "hash")) {
+				String dbName = query.getString("db");
+				updateRecord(dbName, query.getString("uid"), query.getJsonObject("newRecord"), user, hash, callback);
+			}
+		}
 	}
 
 	public void onTcpQuery(NetSocket socket) {
-		System.out.println("New connection!");
+		System.out.println("New TCP connection");
 		socket.handler(buffer -> {
 			String query = buffer.toString();
 			System.out.println("Received query: " + buffer.toString());

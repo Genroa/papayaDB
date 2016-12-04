@@ -91,6 +91,8 @@ class Ideone
 {
 	"type": get,
 	"db": 'dbname',
+	"user" : user,
+	"hash" : hash,
 	"parameters":
 	{
 		"fields": 

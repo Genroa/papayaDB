@@ -50,6 +50,6 @@ public class QueryAnswer {
 	}
 	
 	public static QueryAnswer buildNewEmptyOkAnswer() {
-		return new QueryAnswer(new JsonObject().put("status", QueryAnswerStatus.OK.name()));
+		return new QueryAnswer(new JsonObject().put("status", QueryAnswerStatus.OK.name()).put("data", new JsonArray()));
 	}
 }

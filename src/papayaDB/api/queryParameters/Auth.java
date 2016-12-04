@@ -19,14 +19,14 @@ public class Auth extends QueryParameter {
 		if(values.length != 2) { //Si il n'y a pas deux params c'est pas bon
 			throw new SyntaxErrorException("username and password must be specified");
 		}
-		json.put("auth", new JsonObject().put("user", values[0]).put("password", values[1])); // on ajoute le champ auth au json
+		json.put("auth", new JsonObject().put("user", values[0]).put("hash", values[1])); // on ajoute le champ auth au json
 		return json;
 	}
 	
 	public String valueToString(String key, JsonObject value) {
 		StringBuilder sb = new StringBuilder(key).append("/[");
 		sb	.append(value.getString("user")).append(";")
-			.append(value.getString("pass"));
+			.append(value.getString("hash"));
 		return sb.append("]").toString();
 	}
 }
