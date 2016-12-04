@@ -9,6 +9,9 @@ import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
 import papayaDB.db.DatabaseCollection;
 
+/**
+ * Classe représentant le paramètre equals d'une requete.
+ */
 public class Equals extends QueryParameter {
 	
 	public static void registerParameter() {
@@ -17,7 +20,6 @@ public class Equals extends QueryParameter {
 	}
 
 	public JsonObject valueToJson(JsonObject json, String value) {
-		System.out.println("EQUALS VALUE "+value);
 		JsonObject params = QueryParameter.getJsonParameters(json);
 		JsonArray equals = new JsonArray();
 		for (String s: value.split(";")) {
@@ -36,7 +38,6 @@ public class Equals extends QueryParameter {
 			equals.add(equal);
 		}
 		json.put("parameters", params.put("equals", new JsonObject().put("value", equals)));
-		System.out.println("EQUALS JSON "+json);
 		return json;
 	}
 	
@@ -82,8 +83,6 @@ public class Equals extends QueryParameter {
 			for(Object paramObject : fieldsParameters) {
 				JsonObject param = (JsonObject) paramObject;
 				String field = param.getString("field");
-				
-				System.out.println("Comparaison entre : " + field + " et " + param.getValue("value"));
 		
 				if(!doc.containsKey(field)) return false;
 				if(!doc.getValue(field).equals(param.getValue("value"))) return false;
