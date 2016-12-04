@@ -63,7 +63,7 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 				callback.accept(new QueryAnswer(bodyResponse.toJsonObject()));
 			});
 		});
-		if(body.isEmpty()) {
+		if(body == null) {
 			request.end();
 		} else {
 			request.end(body.toString());
