@@ -47,7 +47,7 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	public void processGetQuery(String query, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
 		client.getNow(port, host, query, resp -> {
-			System.out.println("Got response " + resp.statusCode());
+			System.out.println("[HTTPQI : processGetQuery] Got response " + resp.statusCode());
 			resp.bodyHandler(body -> {
 				callback.accept(new QueryAnswer(body.toJsonObject()));
 			});
@@ -58,7 +58,7 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		Objects.requireNonNull(callback);
 		query = query + "/auth/[" + user + ";" + hash + "]";
 		HttpClientRequest request = client.post(port, host, query, resp -> {
-			System.out.println("Got response " + resp.statusCode());
+			System.out.println("[HTTPQI : processPostQuery] Got response " + resp.statusCode());
 			resp.bodyHandler(bodyResponse -> {
 				callback.accept(new QueryAnswer(bodyResponse.toJsonObject()));
 			});
@@ -75,7 +75,7 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		Objects.requireNonNull(callback);
 		query = query + "/auth/[" + user + ";" + hash + "]";
 		client.delete(port, host, query, resp -> {
-			System.out.println("Got response " + resp.statusCode());
+			System.out.println("[HTTPQI : processDeleteQuery] Got response " + resp.statusCode());
 			resp.bodyHandler(bodyResponse -> {
 				callback.accept(new QueryAnswer(bodyResponse.toJsonObject()));
 			});
