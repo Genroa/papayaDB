@@ -39,7 +39,7 @@ public class FileStorageManager {
 	public FileStorageManager(String fileName) throws IOException {
 		this.fileName = fileName;
 		
-		Path pathToFile = Paths.get(fileName+".coll");
+		Path pathToFile = Paths.get("collections", fileName+".coll");
 		if (!Files.exists(pathToFile, LinkOption.NOFOLLOW_LINKS)) {
 			Files.createFile(pathToFile);
 			recordsNumber = -1;
@@ -448,30 +448,30 @@ public class FileStorageManager {
 			System.out.println(sm.getRecordAtAddress(address));
 		}
 		
-//		int r = sm.createNewRecord(new JsonObject().put("a", "t"));
-//		System.out.println("INSERT 1");
-//		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMap);
-//		
-//		int r2 = sm.createNewRecord(new JsonObject().put("a", "t"));
-//		System.out.println("INSERT 2");
-//		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMap);
-//		
-//		int r3 = sm.createNewRecord(new JsonObject().put("a", "t"));
-//		System.out.println("INSERT 3");
-//		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMap);
-//		
-//		int r4 = sm.createNewRecord(new JsonObject().put("a", "t"));
-//		System.out.println("INSERT 4");
-//		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMap);
-//		
-//		int r5 = sm.createNewRecord(new JsonObject().put("a", "t"));
-//		System.out.println("INSERT 5");
-//		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMap);
+		int r = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 1");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMap);
+		
+		int r2 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 2");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMap);
+		
+		int r3 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 3");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMap);
+		
+		int r4 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 4");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMap);
+		
+		int r5 = sm.createNewRecord(new JsonObject().put("a", "t"));
+		System.out.println("INSERT 5");
+		System.out.println(sm.holesMap);
+		System.out.println(sm.addressMap);
 //
 //		sm.deleteRecordAtAddress(r);
 //		sm.deleteRecordAtAddress(r2);
