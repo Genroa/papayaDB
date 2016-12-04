@@ -64,7 +64,6 @@ public abstract class QueryParameter {
 		//pour chaque clesse si elle hérite de celle ci, on invoke sa méthode register pour qu'elle s'ajoute dans la bonne map.
 		for (Class<?> c : clazz) {
 			if(!c.getName().toString().endsWith("QueryParameter")) {
-				System.out.println("QP : " + c.getName());
 				Method method = null;
 				try {
 					method = c.getMethod("registerParameter");
@@ -235,7 +234,6 @@ public abstract class QueryParameter {
 		if(!isLoaded) {
 			loadQueryParameter();
 		}
-//		System.out.println("getQueryParamKey = " + type.toString() + " " + key);
 		return Optional	.ofNullable((QueryParameter) getQueryParametersForType(type).get(key));
 	}
 	
