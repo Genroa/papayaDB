@@ -10,5 +10,6 @@ public enum QueryAnswerStatus {
 	OK,
 	HOST_UNREACHABLE,
 	SYNTAX_ERROR,
-	STATE_ERROR
+	STATE_ERROR,
+	AUTH_ERROR
 }

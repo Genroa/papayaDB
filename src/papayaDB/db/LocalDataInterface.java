@@ -1,9 +1,17 @@
 package papayaDB.db;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -20,14 +28,53 @@ import papayaDB.api.query.QueryType;
 public class LocalDataInterface extends AbstractChainableQueryInterface {
 	private final NetServer tcpServer;
 	private final Map<String, DatabaseCollection> collections;
+	private final Map<String, String> users;
 
 	public LocalDataInterface(int listeningPort, Map<String, DatabaseCollection> collections) {
 		NetServerOptions options = new NetServerOptions().setPort(listeningPort);
 		tcpServer = getVertx().createNetServer(options);
 		tcpServer.connectHandler(this::onTcpQuery);
 		this.collections = collections;
+		users = loadAuthorizedUsers();
 	}
-
+	
+	private HashMap<String, String> loadAuthorizedUsers() {
+		HashMap<String, String> users = new HashMap<>();
+		Path pathToFile = Paths.get("users");
+		
+		if (!Files.exists(pathToFile, LinkOption.NOFOLLOW_LINKS)) {
+			try {
+				Files.createFile(pathToFile);
+			}
+			catch (IOException e) {
+				System.err.println("Couldn't open or create the users permission file. Exitting...");
+			}
+		}
+		
+		String line;
+		try (
+		    InputStream fis = new FileInputStream("users");
+		    InputStreamReader isr = new InputStreamReader(fis, Charset.forName("UTF-8"));
+		    BufferedReader br = new BufferedReader(isr);
+			) 
+		{
+		    while ((line = br.readLine()) != null) {
+		        String[] infos = line.split(" ");
+		        if(infos.length != 2) {
+		        	System.err.println("Incorrect user information format: "+line);
+		        	continue;
+		        }
+		        users.put(infos[0], infos[1]);
+		    }
+		} catch (FileNotFoundException e) {
+			System.err.println("Couldn't find the users permission file. Exitting...");
+		} catch (IOException e) {
+			System.err.println("Error with the users permission file. Exitting...");
+		}
+		
+		return users;
+	}
+	
 	@Override
 	public void start() throws Exception {
 		listen();
@@ -56,7 +103,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	}
 	
 	private boolean checkPermission(String user, String hash) {
-		return true;
+		return users.get(user) == hash;
 	}
 
 	public void processQuery(String queryString, Consumer<QueryAnswer> callback) {
@@ -139,7 +186,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	
 	@Override
 	public void createNewDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
-		if(!checkPermission(user, hash)) return;
+		if(!checkPermission(user, hash)) {
+			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+		}
 		
 		if(collections.containsKey(name)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+name+" already exists"));
@@ -157,7 +206,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 
 	@Override
 	public void deleteDatabase(String name, String user, String hash, Consumer<QueryAnswer> callback) {
-		if(!checkPermission(user, hash)) return;
+		if(!checkPermission(user, hash)) {
+			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+		}
 		
 		if(!collections.containsKey(name)) {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+name+" doesn't exists"));
@@ -189,7 +240,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 
 	@Override
 	public void updateRecord(String database, String uid, JsonObject newRecord, String user, String hash, Consumer<QueryAnswer> callback) {
-		if(!checkPermission(user, hash)) return;
+		if(!checkPermission(user, hash)) {
+			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+		}
 		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
@@ -206,7 +259,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 
 	@Override
 	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
-		if(!checkPermission(user, hash)) return;
+		if(!checkPermission(user, hash)) {
+			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+		}
 		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
@@ -223,7 +278,9 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 
 	@Override
 	public void insertNewRecord(String database, JsonObject record, String user, String hash, Consumer<QueryAnswer> callback) {
-		if(!checkPermission(user, hash)) return;
+		if(!checkPermission(user, hash)) {
+			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.AUTH_ERROR, "user/hash couple not recognized"));
+		}
 		
 		DatabaseCollection collection = collections.get(database);
 		if(collection == null) {
