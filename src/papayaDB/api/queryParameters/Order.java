@@ -2,6 +2,7 @@ package papayaDB.api.queryParameters;
 
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
+import papayaDB.api.query.SyntaxErrorException;
 
 public class Order extends QueryParameter {
 	public static void registerParameter() {
@@ -13,7 +14,7 @@ public class Order extends QueryParameter {
 		value = value.substring(1, value.length() - 1);
 		String[] values = value.split(";");
 		if(values.length != 2) {
-			//TODO: exception order;
+			throw new SyntaxErrorException("You must specify a field and an order (ASC or DESC)");
 		}
 		json.put("parameters", params.put("order", new JsonObject().put("field", values[0]).put("way", values[1])));
 		return json;

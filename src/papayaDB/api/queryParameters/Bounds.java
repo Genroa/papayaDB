@@ -31,7 +31,6 @@ public class Bounds extends QueryParameter {
 	
 	public String valueToString(String key, JsonObject value) {
 		StringBuilder sb = new StringBuilder(key).append("/[");
-		value.getJsonArray("value");
 		for (Object ja: value.getJsonArray("value")) { //On itère sur les éléments du json array (retourne un Object)
 			JsonObject jo = ((JsonObject)ja);			//On transforme l'Objet en JsonObject
 			sb	.append(jo.getString("field")).append(";")

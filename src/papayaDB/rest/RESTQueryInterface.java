@@ -2,6 +2,7 @@ package papayaDB.rest;
 
 import java.util.function.Consumer;
 
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
@@ -9,11 +10,8 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
-import io.vertx.core.net.NetServer;
-import io.vertx.core.net.NetServerOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import papayaDB.api.query.AbstractChainableQueryInterface;
 import papayaDB.api.query.QueryAnswer;
 import papayaDB.api.query.QueryInterface;
 import papayaDB.api.query.QueryType;
@@ -23,7 +21,7 @@ import papayaDB.api.query.QueryType;
  * suivant le REST. 
  *
  */
-public class RESTQueryInterface extends AbstractChainableQueryInterface {
+public class RESTQueryInterface extends AbstractVerticle{
 	private final HttpServer listeningServer;
 	private final QueryInterface tcpClient;
 	private final int listeningPort;
@@ -41,7 +39,7 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		this.listeningPort = listeningPort;
 		
 		router = Router.router(getVertx());
-		router.post("/createdb/*").handler(x -> this.onRESTQuery(x, QueryType.CREATEDB));
+		router.post("/createdb/*").handler(x -> this.createNewDatabase(x, this::callback));
 		router.post("/insert/*").handler(x -> this.onRESTQuery(x, QueryType.INSERT));
 		router.post("/update/*").handler(x -> this.onRESTQuery(x, QueryType.UPDATE));
 		router.delete("/deletedb/*").handler(x -> this.onRESTQuery(x, QueryType.DELETEDB));
@@ -63,32 +61,18 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 		System.out.println("Now listening for HTTP REST queries...");
 	}
 	
-	@Override
 	public void close() {
 		listeningServer.close();
 		tcpClient.close();
-		super.close();
-	}
-
-	@Override
-	public void processQuery(String query, Consumer<QueryAnswer> callback) {
-		/*
-		JsonObject answer = new JsonObject();
-		answer.put("status", QueryAnswerStatus.OK.name());
-		answer.put("data", new JsonArray().add(query));
-		callback.accept(new QueryAnswer(answer));
-		*/
-		// VRAI CODE EN SUPPOSANT QU'UNE DB EXISTE DE L'AUTRE COTE DE LA CONNEXION
-		tcpClient.processQuery(query, callback);
 	}
 	
-	public void onRESTQuery(RoutingContext routingContext, QueryType type) {
+	public JsonObject getJsonObject(RoutingContext routingContext, QueryType type) {
 		HttpServerResponse response = routingContext.response();
 		HttpServerRequest request = routingContext.request();
 		String path = request.path();
 		
 		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), type);
-		if(json.containsKey("status")) {
+		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
 			response.putHeader("content-type", "application/json")
 			.end(Json.encodePrettily(json));
 			return;
@@ -104,5 +88,104 @@ public class RESTQueryInterface extends AbstractChainableQueryInterface {
 	public static void main(String[] args) {
 		RESTQueryInterface RESTInterface = new RESTQueryInterface("localhost", 6666, 8080);
 		RESTInterface.listen();
+	}
+
+	public void createNewDatabase(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		HttpServerRequest request = routingContext.request();
+		String path = request.path();
+		
+		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), QueryType.CREATEDB);
+		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(json));
+			return;
+		}
+		
+		tcpClient.createNewDatabase(json.getString("db"),
+									json.getJsonObject("auth").getString("user"), 
+									json.getJsonObject("auth").getString("pass"), 
+									answer -> {
+										response.putHeader("content-type", "application/json")
+										.end(Json.encodePrettily(answer.getData()));
+									});
+	}
+
+	public void deleteDatabase(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		HttpServerRequest request = routingContext.request();
+		String path = request.path();
+		
+		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), QueryType.DELETEDB);
+		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(json));
+			return;
+		}
+		
+		tcpClient.deleteDatabase(json.getString("db"),
+									json.getJsonObject("auth").getString("user"), 
+									json.getJsonObject("auth").getString("pass"), 
+									answer -> {
+										response.putHeader("content-type", "application/json")
+										.end(Json.encodePrettily(answer.getData()));
+									});
+	}
+
+	public void exportDatabase(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		HttpServerRequest request = routingContext.request();
+		String path = request.path();
+		
+		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), QueryType.EXPORTALL);
+		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(json));
+			return;
+		}
+		
+		tcpClient.exportDatabase(json.getString("db"),
+									answer -> {
+										response.putHeader("content-type", "application/json")
+										.end(Json.encodePrettily(answer.getData()));
+									});
+	}
+
+	public void updateRecord(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		HttpServerRequest request = routingContext.request();
+		String path = request.path();
+		
+		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), QueryType.CREATEDB);
+		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(json));
+			return;
+		}
+		
+		tcpClient.updateRecord(json.getString("db"),
+											uid,
+											newRecord,
+									json.getJsonObject("auth").getString("user"), 
+									json.getJsonObject("auth").getString("pass"), 
+									answer -> {
+										response.putHeader("content-type", "application/json")
+										.end(Json.encodePrettily(answer.getData()));
+									});
+	}
+
+	public void deleteRecords(RoutingContext routingContext) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void insertNewRecord(RoutingContext routingContext) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void getRecords(RoutingContext routingContext) {
+		// TODO Auto-generated method stub
+		
 	}
 }
