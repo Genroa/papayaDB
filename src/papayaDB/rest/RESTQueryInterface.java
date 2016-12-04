@@ -1,7 +1,5 @@
 package papayaDB.rest;
 
-import java.util.function.Consumer;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -12,7 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import papayaDB.api.query.QueryAnswer;
+import io.vertx.core.Vertx;
 import papayaDB.api.query.QueryInterface;
 import papayaDB.api.query.QueryType;
 
@@ -39,15 +37,15 @@ public class RESTQueryInterface extends AbstractVerticle{
 		this.listeningPort = listeningPort;
 		
 		router = Router.router(getVertx());
-		router.post("/createdb/*").handler(x -> this.createNewDatabase(x, this::callback));
-		router.post("/insert/*").handler(x -> this.onRESTQuery(x, QueryType.INSERT));
-		router.post("/update/*").handler(x -> this.onRESTQuery(x, QueryType.UPDATE));
-		router.delete("/deletedb/*").handler(x -> this.onRESTQuery(x, QueryType.DELETEDB));
-		router.get("/exportall/*").handler(x -> this.onRESTQuery(x, QueryType.EXPORTALL));
-		router.get("/get/*").handler(x -> this.onRESTQuery(x, QueryType.GET));
-		router.delete("/delete/*").handler(x -> this.onRESTQuery(x, QueryType.DELETE));
+		router.post("/createdb/*").handler(x -> this.createNewDatabase(x));
+		router.post("/insert/*").handler(x -> this.insertNewRecord(x));
+		router.post("/update/*").handler(x -> this.updateRecord(x));
+		router.delete("/deletedb/*").handler(x -> this.deleteDatabase(x));
+		router.get("/exportall/*").handler(x -> this.exportDatabase(x));
+		router.get("/get/*").handler(x -> this.getRecords(x));
+		router.delete("/delete/*").handler(x -> this.deleteRecords(x));
 		
-		listeningServer = getVertx().createHttpServer(options);
+		listeningServer = Vertx.vertx().createHttpServer(options);
 	} 
 	
 	@Override
@@ -66,25 +64,6 @@ public class RESTQueryInterface extends AbstractVerticle{
 		tcpClient.close();
 	}
 	
-	public JsonObject getJsonObject(RoutingContext routingContext, QueryType type) {
-		HttpServerResponse response = routingContext.response();
-		HttpServerRequest request = routingContext.request();
-		String path = request.path();
-		
-		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), type);
-		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(json));
-			return;
-		}
-		
-		processQuery(json.encode(), answer -> {
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(answer.getData()));
-		});
-	}
-
-	
 	public static void main(String[] args) {
 		RESTQueryInterface RESTInterface = new RESTQueryInterface("localhost", 6666, 8080);
 		RESTInterface.listen();
@@ -93,9 +72,8 @@ public class RESTQueryInterface extends AbstractVerticle{
 	public void createNewDatabase(RoutingContext routingContext) {
 		HttpServerResponse response = routingContext.response();
 		HttpServerRequest request = routingContext.request();
-		String path = request.path();
 		
-		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), QueryType.CREATEDB);
+		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.CREATEDB);
 		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
 			response.putHeader("content-type", "application/json")
 			.end(Json.encodePrettily(json));
@@ -114,9 +92,8 @@ public class RESTQueryInterface extends AbstractVerticle{
 	public void deleteDatabase(RoutingContext routingContext) {
 		HttpServerResponse response = routingContext.response();
 		HttpServerRequest request = routingContext.request();
-		String path = request.path();
 		
-		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), QueryType.DELETEDB);
+		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.DELETEDB);
 		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
 			response.putHeader("content-type", "application/json")
 			.end(Json.encodePrettily(json));
@@ -135,9 +112,8 @@ public class RESTQueryInterface extends AbstractVerticle{
 	public void exportDatabase(RoutingContext routingContext) {
 		HttpServerResponse response = routingContext.response();
 		HttpServerRequest request = routingContext.request();
-		String path = request.path();
 		
-		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), QueryType.EXPORTALL);
+		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.EXPORTALL);
 		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
 			response.putHeader("content-type", "application/json")
 			.end(Json.encodePrettily(json));
@@ -154,18 +130,63 @@ public class RESTQueryInterface extends AbstractVerticle{
 	public void updateRecord(RoutingContext routingContext) {
 		HttpServerResponse response = routingContext.response();
 		HttpServerRequest request = routingContext.request();
-		String path = request.path();
 		
-		JsonObject json = UrlToQuery.convertToJson(routingContext.request().path(), QueryType.CREATEDB);
+		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.UPDATE);
 		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
 			response.putHeader("content-type", "application/json")
 			.end(Json.encodePrettily(json));
 			return;
 		}
 		
+		JsonObject body = routingContext.getBody().toJsonObject();
+		
 		tcpClient.updateRecord(json.getString("db"),
-											uid,
-											newRecord,
+								body.getString("uid"),
+								body.getJsonObject("newRecord"),
+								json.getJsonObject("auth").getString("user"), 
+								json.getJsonObject("auth").getString("pass"), 
+								answer -> {
+									response.putHeader("content-type", "application/json")
+									.end(Json.encodePrettily(answer.getData()));
+								});
+	}
+
+	public void deleteRecords(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		HttpServerRequest request = routingContext.request();
+		
+		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.DELETE);
+		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(json));
+			return;
+		}
+		
+		tcpClient.deleteRecords(json.getString("db"),
+								json.getJsonObject("parameters"),
+								json.getJsonObject("auth").getString("user"), 
+								json.getJsonObject("auth").getString("pass"), 
+								answer -> {
+									response.putHeader("content-type", "application/json")
+									.end(Json.encodePrettily(answer.getData()));
+								});
+	}
+
+	public void insertNewRecord(RoutingContext routingContext) {
+		HttpServerResponse response = routingContext.response();
+		HttpServerRequest request = routingContext.request();
+		
+		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.INSERT);
+		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(json));
+			return;
+		}
+		
+		JsonObject body = routingContext.getBody().toJsonObject();
+		
+		tcpClient.insertNewRecord(json.getString("db"),
+									body.getJsonObject("record"),
 									json.getJsonObject("auth").getString("user"), 
 									json.getJsonObject("auth").getString("pass"), 
 									answer -> {
@@ -174,18 +195,22 @@ public class RESTQueryInterface extends AbstractVerticle{
 									});
 	}
 
-	public void deleteRecords(RoutingContext routingContext) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void insertNewRecord(RoutingContext routingContext) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	public void getRecords(RoutingContext routingContext) {
-		// TODO Auto-generated method stub
+		HttpServerResponse response = routingContext.response();
+		HttpServerRequest request = routingContext.request();
 		
+		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.GET);
+		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
+			response.putHeader("content-type", "application/json")
+			.end(Json.encodePrettily(json));
+			return;
+		}
+		
+		tcpClient.getRecords(json.getString("db"),
+							json.getJsonObject("parameters"),
+							answer -> {
+								response.putHeader("content-type", "application/json")
+								.end(Json.encodePrettily(answer.getData()));
+							});
 	}
 }
