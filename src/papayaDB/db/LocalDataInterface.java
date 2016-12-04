@@ -29,12 +29,14 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 	private final NetServer tcpServer;
 	private final Map<String, DatabaseCollection> collections;
 	private final Map<String, String> users;
+	private final DatabaseIndexManager indexManager;
 
-	public LocalDataInterface(int listeningPort, HashMap<String, DatabaseCollection> collections) {
+	public LocalDataInterface(int listeningPort, HashMap<String, DatabaseCollection> collections, DatabaseIndexManager indexManager) {
 		NetServerOptions options = new NetServerOptions().setPort(listeningPort);
 		tcpServer = getVertx().createNetServer(options);
 		tcpServer.connectHandler(this::onTcpQuery);
 		this.collections = collections;
+		this.indexManager = indexManager;
 		users = loadAuthorizedUsers();
 	}
 	
