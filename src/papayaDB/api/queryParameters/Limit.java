@@ -26,7 +26,6 @@ public class Limit extends QueryParameter {
 			throw new SyntaxErrorException("limit parameter must be a number");
 		}
 		json.put("parameters", params.put("limit", new JsonObject().put("value", intValue)));
-		System.out.println("valueToJson = " + json);
 		return json;
 	}
 	

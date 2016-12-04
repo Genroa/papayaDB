@@ -3,6 +3,8 @@ package papayaDB.api.queryParameters;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.omg.CORBA.FloatSeqHelper;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
@@ -16,7 +18,6 @@ public class Bounds extends QueryParameter {
 
 	public JsonObject valueToJson(JsonObject json, String value) {
 		JsonObject params = QueryParameter.getJsonParameters(json);
-		value = value.substring(1, value.length() - 1);
 		String[] values = value.split(";");
 		if(values.length % 3 != 0) {
 			//TODO : exception bounds.
@@ -24,9 +25,17 @@ public class Bounds extends QueryParameter {
 		JsonArray bounds = new JsonArray();
 		for (int i = 0; i < values.length; i += 3) {
 			JsonObject bound = new JsonObject();
-			bound	.put("field", values[i])
-					.put("min", values[i + 1])
-					.put("max", values[i + 2]);
+			bound.put("field", values[i]);
+			try {
+				int v1 = Integer.parseInt(values[i+1]);
+				int v2 = Integer.parseInt(values[i+2]);
+				bound	.put("min", v1)
+						.put("max", v2);
+			} catch (NumberFormatException n) {
+				bound	.put("min", values[i + 1])
+						.put("max", values[i + 2]);
+			}
+			
 			bounds.add(bound);
 		}
 		json.put("parameters", params.put("bounds", new JsonObject().put("value", bounds)));
@@ -34,14 +43,14 @@ public class Bounds extends QueryParameter {
 	}
 	
 	public String valueToString(String key, JsonObject value) {
-		StringBuilder sb = new StringBuilder(key).append("/[");
+		StringBuilder sb = new StringBuilder(key).append("/");
 		for (Object ja: value.getJsonArray("value")) { //On itère sur les éléments du json array (retourne un Object)
 			JsonObject jo = ((JsonObject)ja);			//On transforme l'Objet en JsonObject
 			sb	.append(jo.getString("field")).append(";")
 				.append(jo.getInteger("min")).append(";")
 				.append(jo.getInteger("max")).append(";");
 		}
-		return sb.deleteCharAt(sb.length() - 1).append("]").toString();
+		return sb.deleteCharAt(sb.length() - 1).toString();
 	}
 	
 	@Override

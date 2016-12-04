@@ -68,148 +68,125 @@ public class RESTQueryInterface extends AbstractVerticle{
 		RESTQueryInterface RESTInterface = new RESTQueryInterface("localhost", 6666, 8080);
 		RESTInterface.listen();
 	}
-
-	public void createNewDatabase(RoutingContext routingContext) {
+	
+	public JsonObject onRESTQuery(RoutingContext routingContext, QueryType type) {
 		HttpServerResponse response = routingContext.response();
 		HttpServerRequest request = routingContext.request();
 		
-		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.CREATEDB);
+		JsonObject json = UrlToQuery.convertToJson(request.path(), type);
 		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
 			response.putHeader("content-type", "application/json")
 			.end(Json.encodePrettily(json));
+			return null;
+		}
+		return json;
+	}
+
+	public void createNewDatabase(RoutingContext routingContext) {
+		JsonObject json = onRESTQuery(routingContext, QueryType.CREATEDB);
+		if(json == null) {
 			return;
 		}
 		tcpClient.createNewDatabase(json.getString("db"),
 									json.getJsonObject("auth").getString("user"), 
-									json.getJsonObject("auth").getString("hash"), 
+									json.getJsonObject("auth").getString("pass"), 
 									answer -> {
-										response.putHeader("content-type", "application/json")
+										routingContext.response().putHeader("content-type", "application/json")
 										.end(Json.encodePrettily(answer.getData()));
 									});
 	}
 
 	public void deleteDatabase(RoutingContext routingContext) {
-		HttpServerResponse response = routingContext.response();
-		HttpServerRequest request = routingContext.request();
-		
-		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.DELETEDB);
-		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(json));
+		JsonObject json = onRESTQuery(routingContext, QueryType.DELETEDB);
+		if(json == null) {
 			return;
 		}
 		
 		tcpClient.deleteDatabase(json.getString("db"),
 									json.getJsonObject("auth").getString("user"), 
-									json.getJsonObject("auth").getString("hash"), 
+									json.getJsonObject("auth").getString("pass"), 
 									answer -> {
-										response.putHeader("content-type", "application/json")
+										routingContext.response().putHeader("content-type", "application/json")
 										.end(Json.encodePrettily(answer.getData()));
 									});
 	}
 
 	public void exportDatabase(RoutingContext routingContext) {
-		HttpServerResponse response = routingContext.response();
-		HttpServerRequest request = routingContext.request();
-		
-		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.EXPORTALL);
-		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(json));
+		JsonObject json = onRESTQuery(routingContext, QueryType.EXPORTALL);
+		if(json == null) {
 			return;
 		}
 		
 		tcpClient.exportDatabase(json.getString("db"),
 									answer -> {
-										response.putHeader("content-type", "application/json")
+										routingContext.response().putHeader("content-type", "application/json")
 										.end(Json.encodePrettily(answer.getData()));
 									});
 	}
 
 	public void updateRecord(RoutingContext routingContext) {
-		HttpServerResponse response = routingContext.response();
-		HttpServerRequest request = routingContext.request();
-		
-		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.UPDATE);
-		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(json));
+		JsonObject json = onRESTQuery(routingContext, QueryType.UPDATE);
+		if(json == null) {
 			return;
 		}
 		
-		request.bodyHandler(buffer -> {
-			JsonObject body = buffer.toJsonObject();
-			tcpClient.updateRecord(json.getString("db"),
-					body.getString("uid"),
-					body.getJsonObject("newRecord"),
-					json.getJsonObject("auth").getString("user"), 
-					json.getJsonObject("auth").getString("hash"), 
-					answer -> {
-						response.putHeader("content-type", "application/json")
-						.end(Json.encodePrettily(answer.getData()));
-					});
-		});
+		JsonObject body = routingContext.getBody().toJsonObject();
+		
+		tcpClient.updateRecord(json.getString("db"),
+								body.getString("uid"),
+								body.getJsonObject("newRecord"),
+								json.getJsonObject("auth").getString("user"), 
+								json.getJsonObject("auth").getString("pass"), 
+								answer -> {
+									routingContext.response().putHeader("content-type", "application/json")
+									.end(Json.encodePrettily(answer.getData()));
+								});
 	}
 
 	public void deleteRecords(RoutingContext routingContext) {
-		HttpServerResponse response = routingContext.response();
-		HttpServerRequest request = routingContext.request();
-		
-		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.DELETE);
-		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(json));
+		JsonObject json = onRESTQuery(routingContext, QueryType.DELETE);
+		if(json == null) {
 			return;
 		}
 		
 		tcpClient.deleteRecords(json.getString("db"),
 								json.getJsonObject("parameters"),
 								json.getJsonObject("auth").getString("user"), 
-								json.getJsonObject("auth").getString("hash"), 
+								json.getJsonObject("auth").getString("pass"), 
 								answer -> {
-									response.putHeader("content-type", "application/json")
+									routingContext.response().putHeader("content-type", "application/json")
 									.end(Json.encodePrettily(answer.getData()));
 								});
 	}
 
 	public void insertNewRecord(RoutingContext routingContext) {
-		HttpServerResponse response = routingContext.response();
-		HttpServerRequest request = routingContext.request();
-		
-		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.INSERT);
-		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(json));
+		JsonObject json = onRESTQuery(routingContext, QueryType.INSERT);
+		if(json == null) {
 			return;
 		}
-		request.bodyHandler(buffer -> {
-			JsonObject body = buffer.toJsonObject();
-			tcpClient.insertNewRecord(json.getString("db"),
-					body,
-					json.getJsonObject("auth").getString("user"), 
-					json.getJsonObject("auth").getString("hash"), 
-					answer -> {
-						response.putHeader("content-type", "application/json")
-						.end(Json.encodePrettily(answer.getData()));
-					});
-		});
+		
+		JsonObject body = routingContext.getBody().toJsonObject();
+		
+		tcpClient.insertNewRecord(json.getString("db"),
+									body.getJsonObject("record"),
+									json.getJsonObject("auth").getString("user"), 
+									json.getJsonObject("auth").getString("pass"), 
+									answer -> {
+										routingContext.response().putHeader("content-type", "application/json")
+										.end(Json.encodePrettily(answer.getData()));
+									});
 	}
 
 	public void getRecords(RoutingContext routingContext) {
-		HttpServerResponse response = routingContext.response();
-		HttpServerRequest request = routingContext.request();
-		
-		JsonObject json = UrlToQuery.convertToJson(request.path(), QueryType.GET);
-		if(json.containsKey("status")) { //Savoir si une erreur à été détectée pendant le parsing de l'URL
-			response.putHeader("content-type", "application/json")
-			.end(Json.encodePrettily(json));
+		JsonObject json = onRESTQuery(routingContext, QueryType.GET);
+		if(json == null) {
 			return;
 		}
 		
 		tcpClient.getRecords(json.getString("db"),
 							json.getJsonObject("parameters"),
 							answer -> {
-								response.putHeader("content-type", "application/json")
+								routingContext.response().putHeader("content-type", "application/json")
 								.end(Json.encodePrettily(answer.getData()));
 							});
 	}

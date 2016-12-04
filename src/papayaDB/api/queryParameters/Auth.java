@@ -14,7 +14,6 @@ public class Auth extends QueryParameter {
 	}
 	
 	public JsonObject valueToJson(JsonObject json, String value) {
-		value = value.substring(1, value.length() - 1); // on retire les [ ]
 		String[] values = value.split(";"); //on découpe au ;
 		if(values.length != 2) { //Si il n'y a pas deux params c'est pas bon
 			throw new SyntaxErrorException("username and password must be specified");
@@ -24,9 +23,9 @@ public class Auth extends QueryParameter {
 	}
 	
 	public String valueToString(String key, JsonObject value) {
-		StringBuilder sb = new StringBuilder(key).append("/[");
+		StringBuilder sb = new StringBuilder(key).append("/");
 		sb	.append(value.getString("user")).append(";")
 			.append(value.getString("hash"));
-		return sb.append("]").toString();
+		return sb.toString();
 	}
 }

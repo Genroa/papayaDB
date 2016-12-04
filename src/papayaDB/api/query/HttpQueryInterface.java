@@ -1,6 +1,8 @@
 package papayaDB.api.query;
 
 
+
+
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -47,7 +49,6 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	public void processGetQuery(String query, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
 		client.getNow(port, host, query, resp -> {
-			System.out.println("[HTTPQI : processGetQuery] Got response " + resp.statusCode());
 			resp.bodyHandler(body -> {
 				callback.accept(new QueryAnswer(body.toJsonObject()));
 			});
@@ -56,9 +57,8 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	
 	public void processPostQuery(String query, JsonObject body, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
-		query = query + "/auth/[" + user + ";" + hash + "]";
+		query = query + "/auth/" + user + ";" + hash;
 		HttpClientRequest request = client.post(port, host, query, resp -> {
-			System.out.println("[HTTPQI : processPostQuery] Got response " + resp.statusCode());
 			resp.bodyHandler(bodyResponse -> {
 				callback.accept(new QueryAnswer(bodyResponse.toJsonObject()));
 			});
@@ -73,9 +73,8 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	
 	public void processDeleteQuery(String query, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
-		query = query + "/auth/[" + user + ";" + hash + "]";
+		query = query + "/auth/" + user + ";" + hash;
 		client.delete(port, host, query, resp -> {
-			System.out.println("[HTTPQI : processDeleteQuery] Got response " + resp.statusCode());
 			resp.bodyHandler(bodyResponse -> {
 				callback.accept(new QueryAnswer(bodyResponse.toJsonObject()));
 			});
@@ -111,14 +110,12 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	@Override
 	public void deleteRecords(String database, JsonObject parameters, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
+		Objects.requireNonNull(parameters);
 		StringBuilder sb = new StringBuilder("/delete/" + database);
-		
-		if(parameters != null) {
-			for (String key: parameters.fieldNames()) {
-				// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
-				// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
-				sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
-			}
+		for (String key: parameters.fieldNames()) {
+			// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
+			// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
+			sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
 		}
 		processDeleteQuery(sb.toString(), user, hash, callback);
 	}
@@ -129,18 +126,16 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		Objects.requireNonNull(record);
 		processPostQuery("/insert/" + database, record, user, hash, callback);
 	}
-	
+
 	@Override
 	public void getRecords(String database, JsonObject parameters, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
+		Objects.requireNonNull(parameters); 
 		StringBuilder sb = new StringBuilder("/get/" + database);
-		
-		if(parameters != null) {
-			for (String key: parameters.fieldNames()) {
-				// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
-				// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
-				sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
-			}
+		for (String key: parameters.fieldNames()) {
+			// La méthode getQueryParameterKey sert à récuperer l'instance de la clé actuelle.
+			// valueToString permet de convertir l'objet json en une chaine utilisable dans l'URL
+			sb.append("/" + QueryParameter.getQueryParameterKey(QueryType.GET, key).get().valueToString(key, parameters.getJsonObject(key)));
 		}
 		processGetQuery(sb.toString(), callback);
 	}

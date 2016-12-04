@@ -24,13 +24,10 @@ public class Fields extends QueryParameter {
 		JsonObject params = QueryParameter.getJsonParameters(json);
 		JsonObject fields = new JsonObject();
 		JsonArray array = new JsonArray();
-		if(value.charAt(0) == '[' && value.charAt(value.length()-1) == ']') { //si il à plus d'un champ l'utilisateur doit mettre des crochets 
-			String[] values = value.substring(1, value.length() - 1).split(","); //On retire les crochets et on split aux virgules
-			for	(String s: values) { // on ajoute chaque élément au tableau json
-				array.add(s);
-			}
-		} else {
-			array.add(value);
+		
+		String[] values = value.split(","); //On retire les crochets et on split aux virgules
+		for	(String s: values) { // on ajoute chaque élément au tableau json
+			array.add(s);
 		}
 		fields.put("value", array);
 		json.put("parameters", params.put("fields", fields));
@@ -64,7 +61,7 @@ public class Fields extends QueryParameter {
 		if(value.getJsonObject("value").toString().startsWith("[")) {
 			sb.append(value.getJsonArray("value").toString());
 		} else {
-			sb.append(value.getValue("value").toString()).append(";");
+			sb.append(value.getValue("value").toString()).append(",");
 		}
 		return sb.toString();
 	}

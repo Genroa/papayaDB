@@ -18,7 +18,7 @@ public class UrlToQuery {
 	/**
 	 * Expression régulière permettant de découper les slash en ne prenant pas en compte les slashs entre quotes (%22)
 	 */
-	private static final String REGEX = "\\/(?!(?<=%22\\/)|(?=%22))";
+	private static final String REGEX = "/";
 	
 	
 	/**
@@ -33,9 +33,11 @@ public class UrlToQuery {
 	public static JsonObject convertToJson(String url, QueryType type) {
 		JsonObject json = new JsonObject();
 		Objects.requireNonNull(url);
+		System.out.println("[URLToQuery:ReceivedURL]"+url);
 		String[] params = url.substring(1).split(REGEX); //remove the first '/' and split at all others except if between " ".
 		if(params.length % 2 != 0) {
-			generateErrorMessage(json, "invalid number of query parameters");
+			System.out.println(Arrays.toString(params));
+			generateErrorMessage(json, "invalid number of query parameters : " + params.length);
 			return json;
 		} 
 		if(!put(json, "db", params[1], type)) {
