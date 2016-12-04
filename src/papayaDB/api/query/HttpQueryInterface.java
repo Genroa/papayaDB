@@ -124,7 +124,7 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 	public void insertNewRecord(String database, JsonObject record, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(database);
 		Objects.requireNonNull(record);
-		processPostQuery("/insert/" + database, record, user, hash, callback);
+		processPostQuery("/insert/" + database, new JsonObject().put("record", record), user, hash, callback);
 	}
 
 	@Override
