@@ -74,7 +74,7 @@ public class Bounds extends QueryParameter {
 		 */
 		JsonArray fieldsParameters = parameters.getJsonArray("value");
 		return elements.filter(entry -> {
-			JsonObject doc = storageManager.getRecordAtAddress(entry.getKey());
+			JsonObject doc = collection.getStorageManager().getRecordAtAddress(entry.getKey());
 			for(Object paramObject : fieldsParameters) {
 				JsonObject param = (JsonObject) paramObject;
 				String field = param.getString("field");

@@ -89,10 +89,10 @@ public class DatabaseCollection {
 							reachedTerminalOperations = true;
 							terminalResult = convertAddressStreamToTerminal(result);
 						}
-						terminalResult = qp.processTerminalOperation(parameters, terminalResult, storageManager);
+						terminalResult = qp.processTerminalOperation(parameters, terminalResult, this);
 					}
 					else {
-						result = qp.processQueryParameters(parameters, result, storageManager);
+						result = qp.processQueryParameters(parameters, result, this);
 					}
 				}
 			}
