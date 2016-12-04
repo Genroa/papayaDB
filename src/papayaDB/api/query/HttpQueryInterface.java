@@ -46,6 +46,12 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		super.close();
 	}
 	
+	/** Méthode de traitement des requetes get
+	 * @param query
+	 * 			Requete à traiter
+	 * @param callback
+	 * 			Code à executer au retour de l'appel
+	 */
 	public void processGetQuery(String query, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
 		client.getNow(port, host, query, resp -> {
@@ -55,6 +61,18 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		});
 	}
 	
+	/** Méthode de traitement des requetes post
+	 * @param query
+	 * 			Requete à traiter (URL)
+	 * @param body
+	 * 			Corps de la requete à traiter. Contient les données a inserer ou à mettre à jour
+	 * @param user
+	 * 			Nom de l'utilisateur
+	 * @param hash
+	 * 			Mot de passe associé à l'utilisateur
+	 * @param callback
+	 * 			Code à executer au retour de l'appel
+	 */
 	public void processPostQuery(String query, JsonObject body, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
 		query = query + "/auth/" + user + ";" + hash;
@@ -71,6 +89,16 @@ class HttpQueryInterface extends AbstractChainableQueryInterface {
 		
 	}
 	
+	/** Méthode permettant de traiter une requete de suppression
+	 * @param query
+	 * 			La requete à traiter
+	 * @param user
+	 * 			Le nom de l'utilisateur
+	 * @param hash
+	 * 			Le hash du mot de passe de l'utilisateur
+	 * @param callback
+	 * 			Le code à effectuer quand le traitement est terminé
+	 */
 	public void processDeleteQuery(String query, String user, String hash, Consumer<QueryAnswer> callback) {
 		Objects.requireNonNull(callback);
 		query = query + "/auth/" + user + ";" + hash;
