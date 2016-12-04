@@ -41,6 +41,15 @@ public class DatabaseCollection {
 		this.storageManager = new FileStorageManager(name);
 	}
 	
+	public FileStorageManager getStorageManager() {
+		return storageManager;
+	}
+	
+	@Override
+	public String toString() {
+		return "Collection "+name;
+	}
+	
 	private Stream<JsonObject> processParameters(QueryType type, JsonObject parametersContainer) {
 		Stream<JsonObject> terminalResult = null;
 		Stream<Entry<Integer, Integer>> result = storageManager.getRecordsMap().entrySet().stream();

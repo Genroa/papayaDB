@@ -12,6 +12,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -26,13 +27,13 @@ import io.vertx.core.json.JsonObject;
  */
 public class FileStorageManager {
 	private final static int EMPTY_CHUNK_SECTION = -1;
-	private final static int CHUNK_SIZE = 64;
+	public final static int CHUNK_SIZE = 64;
 	private final RandomAccessFile rafile;
 	private FileChannel file;
 	private int recordsNumber;
 	private MappedByteBuffer fileBuffer;
 	private HashMap<Integer, ArrayList<Integer>> holesMap = new HashMap<>();
-	private HashMap<Integer, Integer> addressMapping = new HashMap<>();
+	private HashMap<Integer, Integer> addressMap = new HashMap<>();
 	private final String fileName;
 	
 	public FileStorageManager(String fileName) throws IOException {
@@ -86,7 +87,7 @@ public class FileStorageManager {
 					continue;
 				}
 				int objectPosition = fileBuffer.position()-Integer.BYTES;
-				addressMapping.put(objectPosition, objectSize);
+				addressMap.put(objectPosition, objectSize);
 				
 				fileBuffer.position(objectPosition+computeChunkSize(objectSize));
 				i++;
@@ -141,12 +142,12 @@ public class FileStorageManager {
 		ArrayList<Integer> emptyChunksOfThisSize = holesMap.getOrDefault(chunkSize, new ArrayList<>());
 		emptyChunksOfThisSize.add(holePosition);
 		holesMap.put(chunkSize, emptyChunksOfThisSize);
-		addressMapping.remove(positionInFile);
+		addressMap.remove(positionInFile);
 		return new int[]{holePosition, chunkSize};
 	}
 	
 	public JsonObject getRecordAtAddress(int address) {
-		int realSize = addressMapping.getOrDefault(address, -1);
+		int realSize = addressMap.getOrDefault(address, -1);
 		if(realSize == -1) return null;
 		
 		byte[] byteArr = ByteBuffer.allocate(realSize).array();
@@ -168,7 +169,7 @@ public class FileStorageManager {
 		// Copie bien passée
 		if(address != -1) {
 			updateRecordsNumber(recordsNumber+1);
-			addressMapping.put(address, jsonObjectAsBuffer.length());
+			addressMap.put(address, jsonObjectAsBuffer.length());
 		}
 		return address;
 	}
@@ -207,7 +208,7 @@ public class FileStorageManager {
 	}
 	
 	public void deleteRecordAtAddress(int address) {
-		int realSize = addressMapping.getOrDefault(address, -1);
+		int realSize = addressMap.getOrDefault(address, -1);
 		if(realSize == -1) return;
 		
 		int chunkSize = computeChunkSize(realSize);
@@ -255,7 +256,11 @@ public class FileStorageManager {
 	 * @return
 	 */
 	public HashMap<Integer, Integer> getRecordsMap() {
-		return new HashMap<>(addressMapping);
+		return addressMap;
+	}
+	
+	public HashMap<Integer, ArrayList<Integer>> getHolesMap() {
+		return holesMap;
 	}
 	
 	/**
@@ -323,7 +328,7 @@ public class FileStorageManager {
 	
 	public int updateRecord(int oldAddress, JsonObject newObject)
 	{
-		int oldSize = addressMapping.getOrDefault(oldAddress, -1);
+		int oldSize = addressMap.getOrDefault(oldAddress, -1);
 		if(oldSize == -1) {
 			return -1;
 		}
@@ -333,12 +338,11 @@ public class FileStorageManager {
 		int newSizeInChunks = computeChunkSize(bytes.length+Integer.BYTES)/CHUNK_SIZE;
 		
 		// Si la taille en chunks est la même il suffit de réécrire par-dessus
-		System.out.println("OLD SC "+oldSizeInChunks+" NEW SC "+newSizeInChunks);
 		if(oldSizeInChunks == newSizeInChunks) {
 			fileBuffer.position(oldAddress);
 			fileBuffer.putInt(bytes.length);
 			fileBuffer.put(bytes);
-			addressMapping.put(oldAddress, bytes.length);
+			addressMap.put(oldAddress, bytes.length);
 			return oldAddress;
 		}
 		else if(oldSizeInChunks > newSizeInChunks) {
@@ -346,21 +350,25 @@ public class FileStorageManager {
 			fileBuffer.position(oldAddress);
 			fileBuffer.putInt(bytes.length);
 			fileBuffer.put(bytes);
-			addressMapping.put(oldAddress, bytes.length);
+			addressMap.put(oldAddress, bytes.length);
 			
 			//Puis inscrire le nouveau trou
 			int holePos = oldAddress + chunkSizeDiff*CHUNK_SIZE;
-			fileBuffer.position(holePos);
+			int[] infos = registerChunkSectionAsHole(holePos, chunkSizeDiff);
+			System.out.println(Arrays.toString(infos));
+			
+			fileBuffer.position(infos[0]);
 			fileBuffer.putInt(EMPTY_CHUNK_SECTION);
-			fileBuffer.putInt(chunkSizeDiff);
-			registerChunkSectionAsHole(holePos, chunkSizeDiff);
+			fileBuffer.putInt(infos[1]);
+			
 			return oldAddress;
 		}
 		// oldSizeInChunks < newSizeInChunks : pas la place
 		else {
+			System.out.println("old address "+oldAddress+" "+bytes.length+" chunkSize "+newSizeInChunks);
 			fileBuffer.position(oldAddress);
-			byte[] oldRecordInBytes = new byte[bytes.length];
-			fileBuffer.get(oldRecordInBytes, 0, bytes.length);
+			byte[] oldRecordInBytes = new byte[oldSize];
+			fileBuffer.get(oldRecordInBytes, 0, oldSize);
 			int newPos;
 			try {
 				lookAtHoles();
@@ -369,85 +377,115 @@ public class FileStorageManager {
 			} catch (IOException e) {
 				// Pas réussi à modifier (IOException sur findSuitableSize) : on réinscrit l'ancien au même endroit
 				fileBuffer.position(oldAddress);
-				fileBuffer.putInt(oldRecordInBytes.length);
+				fileBuffer.putInt(oldSize);
 				fileBuffer.put(oldRecordInBytes);
 				return oldAddress;
 			}
-			System.out.println("New position found for update is "+newPos);
-			// Ecriture au nouvel endroit
-			fileBuffer.position(newPos);
-			fileBuffer.putInt(bytes.length);
-			fileBuffer.put(bytes);
 			
-			// Suppression de l'ancien exemplaire
-			fileBuffer.position(oldAddress);
-			fileBuffer.putInt(EMPTY_CHUNK_SECTION);
-			fileBuffer.putInt(oldSizeInChunks);
-			registerChunkSectionAsHole(oldAddress, oldSizeInChunks);
-			addressMapping.put(newPos, bytes.length);
+			copyRecordToNewAddressWithData(oldAddress, newPos, oldSizeInChunks, bytes);
+			
 			return newPos;
 		}
 	}
 	
+	public void copyRecordToNewAddressWithData(int oldAddress, int newAddress, int oldSizeInChunks, byte[] bytes) {
+		// Ecriture au nouvel endroit
+		// Suppression de la holesMap
+		System.out.println("BEFORE REMOVE : "+holesMap);
+		int oldHoleSize = oldSizeInChunks;
+		int newSizeInChunks = computeChunkSize(bytes.length)/CHUNK_SIZE;
+		
+		for(Entry<Integer, ArrayList<Integer>> entry : holesMap.entrySet()) {
+			ArrayList<Integer> list = entry.getValue();
+			if(list.contains((Integer) newAddress)) {
+				list.remove((Integer) newAddress);
+				oldHoleSize = entry.getKey();
+			}
+		}
+		
+		int newHoleSize = oldHoleSize - oldSizeInChunks;
+		if(newHoleSize != 0) {
+			registerChunkSectionAsHole(newAddress+newSizeInChunks*CHUNK_SIZE, newHoleSize);
+		}
+		
+		System.out.println("AFTER REMOVE : "+holesMap);
+		
+		fileBuffer.position(newAddress);
+		fileBuffer.putInt(bytes.length);
+		fileBuffer.put(bytes);
+		
+		
+		// Suppression de l'ancien exemplaire
+		int[] infos = registerChunkSectionAsHole(oldAddress, oldSizeInChunks);
+		
+		fileBuffer.position(infos[0]);
+		fileBuffer.putInt(EMPTY_CHUNK_SECTION);
+		fileBuffer.putInt(infos[1]);
+		
+		addressMap.put(newAddress, bytes.length);
+		
+//		holes = holesMap.getOrDefault(oldSizeInChunks, new ArrayList<Integer>());
+//		holes.add(oldAddress);
+//		holesMap.put(oldSizeInChunks, holes);
+	}
+	
+	public void copyRecordToNewAddressWithLength(int oldAddress, int newAddress, int oldSizeInChunks, int length) {
+		fileBuffer.position(oldAddress);
+		byte[] oldRecordInBytes = new byte[length];
+		fileBuffer.getInt();
+		fileBuffer.get(oldRecordInBytes, 0, length);
+		System.out.println("Copying record from address "+oldAddress+" to "+newAddress+" with old size to free "+oldSizeInChunks+" and new real size "+length);
+		copyRecordToNewAddressWithData(oldAddress, newAddress, oldSizeInChunks, oldRecordInBytes);
+	}
 	
 	public static void main(String[] args) throws IOException {
 		FileStorageManager sm = new FileStorageManager("testDb");
 		System.out.println("BEG");
 		System.out.println(sm.holesMap);
-		System.out.println(sm.addressMapping);
+		System.out.println(sm.addressMap);
 		
-		for(Integer address : sm.addressMapping.keySet()) {
+		for(Integer address : sm.addressMap.keySet()) {
 			System.out.println(sm.getRecordAtAddress(address));
 		}
 		
-		int r = sm.createNewRecord(new JsonObject().put("a", "t"));
-		System.out.println("INSERT 1");
-		System.out.println(sm.holesMap);
-		System.out.println(sm.addressMapping);
-		
-		int r2 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		System.out.println("INSERT 2");
-		System.out.println(sm.holesMap);
-		System.out.println(sm.addressMapping);
-		
-		int r3 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		System.out.println("INSERT 3");
-		System.out.println(sm.holesMap);
-		System.out.println(sm.addressMapping);
-		
-		int r4 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		System.out.println("INSERT 4");
-		System.out.println(sm.holesMap);
-		System.out.println(sm.addressMapping);
-		
-		int r5 = sm.createNewRecord(new JsonObject().put("a", "t"));
-		System.out.println("INSERT 5");
-		System.out.println(sm.holesMap);
-		System.out.println(sm.addressMapping);
-
-		sm.deleteRecordAtAddress(r4);
-		System.out.println("DELETE 4");
-		System.out.println(sm.holesMap);
-		System.out.println(sm.addressMapping);
+//		int r = sm.createNewRecord(new JsonObject().put("a", "t"));
+//		System.out.println("INSERT 1");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMap);
 //		
-//		r2.deleteRecord();
+//		int r2 = sm.createNewRecord(new JsonObject().put("a", "t"));
+//		System.out.println("INSERT 2");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMap);
+//		
+//		int r3 = sm.createNewRecord(new JsonObject().put("a", "t"));
+//		System.out.println("INSERT 3");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMap);
+//		
+//		int r4 = sm.createNewRecord(new JsonObject().put("a", "t"));
+//		System.out.println("INSERT 4");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMap);
+//		
+//		int r5 = sm.createNewRecord(new JsonObject().put("a", "t"));
+//		System.out.println("INSERT 5");
+//		System.out.println(sm.holesMap);
+//		System.out.println(sm.addressMap);
+//
+//		sm.deleteRecordAtAddress(r);
+//		sm.deleteRecordAtAddress(r2);
+//		sm.deleteRecordAtAddress(r3);
 //		System.out.println("DELETE 2");
 //		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMapping);
+//		System.out.println(sm.addressMap);
 //		
-//		r3.deleteRecord();
-//		System.out.println("DELETE 3");
-//		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMapping);
-//		
-//		Record r7 = sm.createNewRecord(new JsonObject().put("a", "t"));
-//		System.out.println("INSERT 7");
-//		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMapping);
-//		
-//		r5.updateRecord(r5.getRecord().put("newKey", "newValue"));
+//		JsonObject json5 = sm.getRecordAtAddress(r5).put("newKey", "newValue");
+//		sm.updateRecord(r5, json5);
 //		System.out.println("UPDATE 5");
 //		System.out.println(sm.holesMap);
-//		System.out.println(sm.addressMapping);
+//		System.out.println(sm.addressMap);
+		
+		System.out.println("RECORDS NUMBER : "+sm.getRecordsNumber());
 	}
 }
