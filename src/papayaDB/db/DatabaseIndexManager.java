@@ -37,7 +37,7 @@ public class DatabaseIndexManager extends AbstractVerticle {
 				System.out.println("object:"+((Comparable<?>) doc.getValue(indexQuery.getValue())));
 				System.out.println("key:"+entry.getKey());
 				index.put(((Comparable<?>) doc.getValue(indexQuery.getValue())), entry.getKey());
-				return doc;
+				return doc; 
 			}).findAny();
 			
 			System.out.println("index tree "+index);
