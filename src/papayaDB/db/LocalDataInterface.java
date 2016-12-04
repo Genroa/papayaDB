@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
@@ -182,7 +182,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
 		}
 		else {
-			ArrayList<JsonObject> objects = collection.searchRecords(QueryType.EXPORTALL, null);
+			List<JsonObject> objects = collection.searchRecords(QueryType.EXPORTALL, null);
 			callback.accept(QueryAnswer.buildNewDataAnswer(objects));
 		}
 	}
@@ -196,8 +196,11 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
 		}
 		else {
-			// TODO code update document dans databasecollection
-			callback.accept(QueryAnswer.buildNewEmptyOkAnswer());
+			if(collection.updateRecord(uid, newRecord)) {
+				callback.accept(QueryAnswer.buildNewEmptyOkAnswer());
+			} else {
+				callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "No object has uid "+uid));
+			}
 		}
 	}
 
@@ -210,8 +213,10 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
 		}
 		else {
-			ArrayList<JsonObject> objects = collection.searchRecords(QueryType.DELETE, null);
-			// TODO code delete documents dans databasecollection
+			List<JsonObject> objects = collection.searchRecords(QueryType.DELETE, null);
+			for(JsonObject object : objects) {
+				collection.deleteRecord(object.getString("uid"));
+			}
 			callback.accept(QueryAnswer.buildNewEmptyOkAnswer());
 		}
 	}
@@ -225,7 +230,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
 		}
 		else {
-			// TODO code insert document dans databasecollection	
+			collection.insertNewRecord(record);
 			callback.accept(QueryAnswer.buildNewEmptyOkAnswer());
 		}
 	}
@@ -238,7 +243,7 @@ public class LocalDataInterface extends AbstractChainableQueryInterface {
 			callback.accept(QueryAnswer.buildNewErrorAnswer(QueryAnswerStatus.STATE_ERROR, "Database "+database+" doesn't exists"));
 		}
 		else {
-			ArrayList<JsonObject> objects = collection.searchRecords(QueryType.GET, parameters.getJsonObject("parameters"));
+			List<JsonObject> objects = collection.searchRecords(QueryType.GET, parameters.getJsonObject("parameters"));
 			callback.accept(QueryAnswer.buildNewDataAnswer(objects));
 		}
 	}

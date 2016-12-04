@@ -254,6 +254,14 @@ public class FileStorageManager {
 	}
 	
 	/**
+	 * Retourne une copie de l'addressMapping. Ne verrouille pas son utilisation.
+	 * @return
+	 */
+	public HashMap<Integer, Integer> getRecordsMap() {
+		return new HashMap<>(addressMapping);
+	}
+	
+	/**
 	 * Retourne la position où écrire le nouveau Record. S'occupe éventuellement de l'agrandissement/allocation mémoire si nécessaire. La section retournée est assurée comme allouée mais vide.
 	 * @param sizeOfChunkInBytes la taille nécessaire à trouver
 	 * @return la position où écrire

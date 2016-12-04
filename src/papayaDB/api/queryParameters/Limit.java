@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 import io.vertx.core.json.JsonObject;
 import papayaDB.api.query.QueryType;
 import papayaDB.api.query.SyntaxErrorException;
+import papayaDB.db.FileStorageManager;
 
 public class Limit extends QueryParameter {
 	
@@ -29,8 +30,9 @@ public class Limit extends QueryParameter {
 		System.out.println("valueToJson = " + json);
 		return json;
 	}
-
-	public Stream<JsonObject> processQueryParameters(JsonObject parameters, Stream<JsonObject> elements) {
+	
+	@Override
+	public Stream<JsonObject> processTerminalOperation(JsonObject parameters, Stream<JsonObject> elements, FileStorageManager storageManager) {
 		long maxSize = parameters.getLong("value");
 		return elements.limit(maxSize);
 	}
