@@ -12,7 +12,7 @@ public class DemoClient extends AbstractVerticle{
 		
 		String user = "Genroa";
 		String hash = "a58fdaf6dc9ee61c5aa5ee514d9b711ef72e239d8f1c53e1e05631357ffc8ed6f1f21d3f2f4c1d2220f5874b6d6e6d74fca6618a21c145866978052fb215c3be";
-
+		
 //		client.createNewDatabase("myDb", user, hash, answer -> {
 //			System.out.println("CREATE :"+answer);
 //			
